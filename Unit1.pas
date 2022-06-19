@@ -40,11 +40,7 @@ type
     procedure PackageAfterInstall(Sender: TObject);
     procedure PackageInstallError(Sender: TObject; AErrorMessage: string);
     procedure PackageBeforeImport(Sender: TObject);
-    procedure PyEngineAfterInit(Sender: TObject);
-    procedure PyEngineAfterLoad(Sender: TObject);
-    procedure PyEngineBeforeLoad(Sender: TObject);
     procedure PyEngineBeforeUnload(Sender: TObject);
-    procedure PyEnginePathInitialization(Sender: TObject; var Path: string);
     procedure PyEngineSysPathInit(Sender: TObject; PathList: PPyObject);
     procedure PyEmbedEnvAfterActivate(Sender: TObject;
       const APythonVersion: string; const AActivated: Boolean);
@@ -95,14 +91,13 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
-  AppRoot := ExtractFileDir(ExtractFileDir(ExtractFileDir(ParamStr(0))));
+  AppRoot := TPath.GetLibraryPath;
   SystemAvailable := False;
   SystemActivated := False;
   LogMemo.ReadOnly := True;
   LogMemo.Lines.Clear;
   Log('Getting Ready');
-//  CodeMemo.Lines.LoadFromFile(AppRoot + PathDelim + 'testcode.py');
-  CodeMemo.Lines.LoadFromFile('testcode.py');
+  CodeMemo.Lines.LoadFromFile(AppRoot + 'testcode.py');
   CreateSystem;
   EnableForm(False);
 end;
@@ -164,7 +159,7 @@ end;
 
 procedure TForm1.PackageAfterInstall(Sender: TObject);
 begin
-  Log(TPyPackage(Sender).PyModuleName + ' Installed');
+  Log('Installed ' + TPyPackage(Sender).PyModuleName);
 end;
 
 procedure TForm1.PackageBeforeImport(Sender: TObject);
@@ -190,6 +185,23 @@ begin
   if not SystemAvailable then
     begin
       Log('Creating System');
+      Log('===============');
+      Log('Home : ' + TPath.GetHomePath);
+      Log('Temp : ' + TPath.GetTempPath);
+      Log('Libs : ' + TPath.GetLibraryPath);
+      Log('Docs : ' + TPath.GetDocumentsPath);
+      Log('Shared Docs : ' + TPath.GetSharedDocumentsPath);
+      Log('Cache : ' + TPath.GetCachePath);
+      Log('Pics : ' + TPath.GetPicturesPath);
+      Log('Shared Pics : ' + TPath.GetSharedPicturesPath);
+      Log('Public : ' + TPath.GetPublicPath);
+      Log('Cams : ' + TPath.GetCameraPath);
+      Log('Shared Cams : ' + TPath.GetSharedCameraPath);
+      Log('Movies : ' + TPath.GetMoviesPath);
+      Log('Shared Movies : ' + TPath.GetSharedMoviesPath);
+      Log('Downloads : ' + TPath.GetDownloadsPath);
+      Log('Shared Downloads : ' + TPath.GetSharedDownloadsPath);
+      Log('===============');
       MaskFPUExceptions(True);
       FTask := TTask.Run(procedure() begin
         PyEmbedEnv.Setup(PyEmbedEnv.PythonVersion);
@@ -199,7 +211,6 @@ begin
         end);
         FTask.CheckCanceled();
 
-        Log('Numpy Install');
         Numpy1.Install();
         FTask.CheckCanceled();
 
@@ -237,8 +248,7 @@ end;
 
 procedure TForm1.btnReLoadClick(Sender: TObject);
 begin
-//  CodeMemo.Lines.LoadFromFile(AppRoot + PathDelim + 'testcode.py');
-  CodeMemo.Lines.LoadFromFile('testcode.py');
+  CodeMemo.Lines.LoadFromFile(AppRoot + 'testcode.py');
 end;
 
 procedure TForm1.RunCode();
@@ -273,24 +283,7 @@ begin
     end;
 end;
 
-///// Startup Debug /////
-
-procedure TForm1.PyEmbedEnvAfterActivate(Sender: TObject;
-  const APythonVersion: string; const AActivated: Boolean);
-begin
-  Log('PyEmbedEnvAfterActivate : ' + APythonVersion + ', Active =' + BoolToStr(AActivated)); // SBDbg
-end;
-
-procedure TForm1.PyEmbedEnvAfterDeactivate(Sender: TObject;
-  const APythonVersion: string);
-begin
-  Log('PyEmbedEnvAfterDeactivate'); // SBDbg
-  SystemActivated := False;
-  if cbCleanOnExit.IsChecked then
-    begin
-      TDirectory.Delete(PyEmbedEnv.EnvironmentPath, True);
-    end;
-end;
+///// Python Setup /////
 
 procedure TForm1.PyEmbedEnvZipProgress(Sender: TObject;
   ADistribution: TPyCustomEmbeddableDistribution; FileName: string;
@@ -299,29 +292,28 @@ begin
   UpdateStatus(Filename + ' : ' + IntToStr(Position));
 end;
 
-procedure TForm1.PyEngineAfterInit(Sender: TObject);
+///// Python Startup /////
+
+procedure TForm1.PyEmbedEnvAfterActivate(Sender: TObject;
+  const APythonVersion: string; const AActivated: Boolean);
 begin
-  Log('PyEngineAfterInit'); // SBDbg
+  if AActivated then
+    Log('Python ' + APythonVersion + ' Active');
 end;
 
-procedure TForm1.PyEngineAfterLoad(Sender: TObject);
+procedure TForm1.PyEmbedEnvAfterDeactivate(Sender: TObject;
+  const APythonVersion: string);
 begin
-  Log('PyEngineAfterLoad'); // SBDbg
-end;
-
-procedure TForm1.PyEngineBeforeLoad(Sender: TObject);
-begin
-  Log('PyEngineBeforeLoad'); // SBDbg
+  SystemActivated := False;
+  if cbCleanOnExit.IsChecked then
+    begin
+      TDirectory.Delete(PyEmbedEnv.EnvironmentPath, True);
+    end;
 end;
 
 procedure TForm1.PyEngineBeforeUnload(Sender: TObject);
 begin
   Log('PyEngineBeforeUnload'); // SBDbg
-end;
-
-procedure TForm1.PyEnginePathInitialization(Sender: TObject; var Path: string);
-begin
-  Log('PyEnginePathInitialization'); // SBDbg
 end;
 
 procedure TForm1.PyEngineSysPathInit(Sender: TObject; PathList: PPyObject);
