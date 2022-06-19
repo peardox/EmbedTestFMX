@@ -1,0 +1,228 @@
+object Form1: TForm1
+  Left = 0
+  Top = 0
+  Caption = 'Form1'
+  ClientHeight = 480
+  ClientWidth = 640
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnCreate = FormCreate
+  OnCloseQuery = FormCloseQuery
+  DesignerMasterStyle = 0
+  object StatusBar1: TStatusBar
+    Position.Y = 458.000000000000000000
+    ShowSizeGrip = True
+    Size.Width = 640.000000000000000000
+    Size.Height = 22.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    object cbCleanOnExit: TCheckBox
+      Align = Right
+      Position.X = 520.000000000000000000
+      Size.Width = 120.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      Text = 'Clean on Exit'
+    end
+    object lblStatus: TLabel
+      Align = Left
+      Size.Width = 120.000000000000000000
+      Size.Height = 22.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+    end
+  end
+  object TabControl1: TTabControl
+    Align = Top
+    Size.Width = 640.000000000000000000
+    Size.Height = 327.000000000000000000
+    Size.PlatformDefault = False
+    TabIndex = 2
+    TabOrder = 2
+    TabPosition = PlatformDefault
+    Sizes = (
+      640s
+      301s
+      640s
+      301s
+      640s
+      301s)
+    object TabItem1: TTabItem
+      CustomIcon = <
+        item
+        end>
+      IsSelected = False
+      Size.Width = 46.000000000000000000
+      Size.Height = 26.000000000000000000
+      Size.PlatformDefault = False
+      StyleLookup = ''
+      TabOrder = 0
+      Text = 'Style'
+      ExplicitSize.cx = 69.000000000000000000
+      ExplicitSize.cy = 26.000000000000000000
+    end
+    object TabItem2: TTabItem
+      CustomIcon = <
+        item
+        end>
+      IsSelected = False
+      Size.Width = 46.000000000000000000
+      Size.Height = 26.000000000000000000
+      Size.PlatformDefault = False
+      StyleLookup = ''
+      TabOrder = 0
+      Text = 'Train'
+      ExplicitSize.cx = 46.000000000000000000
+      ExplicitSize.cy = 26.000000000000000000
+    end
+    object TabItem3: TTabItem
+      CustomIcon = <
+        item
+        end>
+      IsSelected = True
+      Size.Width = 48.000000000000000000
+      Size.Height = 26.000000000000000000
+      Size.PlatformDefault = False
+      StyleLookup = ''
+      TabOrder = 0
+      Text = 'Code'
+      ExplicitSize.cx = 48.000000000000000000
+      ExplicitSize.cy = 26.000000000000000000
+      object CodeMemo: TMemo
+        Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+        DataDetectorTypes = []
+        Align = Client
+        Size.Width = 640.000000000000000000
+        Size.Height = 276.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        Viewport.Width = 636.000000000000000000
+        Viewport.Height = 272.000000000000000000
+      end
+      object Panel1: TPanel
+        Align = Bottom
+        Position.Y = 276.000000000000000000
+        Size.Width = 640.000000000000000000
+        Size.Height = 25.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        object btnRunCode: TButton
+          Align = Left
+          Size.Width = 80.000000000000000000
+          Size.Height = 25.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 1
+          Text = 'Run Code'
+          OnClick = btnRunCodeClick
+        end
+        object btnReLoad: TButton
+          Align = Left
+          Margins.Left = 8.000000000000000000
+          Position.X = 88.000000000000000000
+          Size.Width = 80.000000000000000000
+          Size.Height = 25.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 2
+          Text = 'ReLoad Code'
+          OnClick = btnReLoadClick
+        end
+      end
+    end
+  end
+  object LogMemo: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    Align = Client
+    Size.Width = 640.000000000000000000
+    Size.Height = 128.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 4
+    Viewport.Width = 636.000000000000000000
+    Viewport.Height = 124.000000000000000000
+  end
+  object Splitter1: TSplitter
+    Align = Top
+    Cursor = crVSplit
+    MinSize = 20.000000000000000000
+    Position.Y = 327.000000000000000000
+    Size.Width = 640.000000000000000000
+    Size.Height = 3.000000000000000000
+    Size.PlatformDefault = False
+  end
+  object PyEngine: TPythonEngine
+    AutoLoad = False
+    DllName = 'python39.dll'
+    DllPath = 'python'
+    APIVersion = 39
+    RegVersion = '3.9'
+    UseLastKnownVersion = False
+    OnAfterLoad = PyEngineAfterLoad
+    OnBeforeLoad = PyEngineBeforeLoad
+    OnBeforeUnload = PyEngineBeforeUnload
+    IO = PyIO
+    OnAfterInit = PyEngineAfterInit
+    OnPathInitialization = PyEnginePathInitialization
+    OnSysPathInit = PyEngineSysPathInit
+    Left = 24
+    Top = 344
+  end
+  object SciPy1: TSciPy
+    AutoImport = False
+    PythonEngine = PyEngine
+    ManagerKind = pip
+    AutoInstall = False
+    BeforeInstall = PackageConfigureInstall
+    Left = 24
+    Top = 408
+  end
+  object NumPy1: TNumPy
+    AutoImport = False
+    PythonEngine = PyEngine
+    ManagerKind = pip
+    AutoInstall = False
+    BeforeInstall = PackageConfigureInstall
+    Left = 96
+    Top = 408
+  end
+  object PyTorch1: TPyTorch
+    AutoImport = False
+    PythonEngine = PyEngine
+    ManagerKind = pip
+    Managers.Pip.InstallOptions.ExtraIndexUrl = 'https://download.pytorch.org/whl/cu113'
+    AutoInstall = False
+    BeforeInstall = PackageConfigureInstall
+    Left = 168
+    Top = 408
+  end
+  object TorchVision1: TTorchVision
+    AutoImport = False
+    PythonEngine = PyEngine
+    ManagerKind = pip
+    Managers.Pip.InstallOptions.ExtraIndexUrl = 'https://download.pytorch.org/whl/cu113'
+    AutoInstall = False
+    BeforeInstall = PackageConfigureInstall
+    Left = 240
+    Top = 408
+  end
+  object PyEmbedEnv: TPyEmbeddedResEnvironment39
+    AfterActivate = PyEmbedEnvAfterActivate
+    AfterDeactivate = PyEmbedEnvAfterDeactivate
+    AutoLoad = False
+    PythonVersion = '3.9'
+    PythonEngine = PyEngine
+    OnZipProgress = PyEmbedEnvZipProgress
+    EnvironmentPath = 'python'
+    Left = 168
+    Top = 344
+  end
+  object PyIO: TPythonGUIInputOutput
+    OnSendUniData = PyIOSendUniData
+    UnicodeIO = True
+    RawOutput = False
+    Output = LogMemo
+    Left = 96
+    Top = 344
+  end
+end
