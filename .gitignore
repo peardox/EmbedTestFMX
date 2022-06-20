@@ -55,6 +55,7 @@
 *.projdata
 *.tvsconfig
 *.dsk
+AndroidManifest.template.xml
 
 # Delphi history and backups
 __history/
