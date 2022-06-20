@@ -33,6 +33,7 @@ type
     Panel1: TPanel;
     btnRunCode: TButton;
     btnReLoad: TButton;
+    dlgOpenDefaultCode: TOpenDialog;
     procedure PyIOSendUniData(Sender: TObject; const Data: string);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -54,6 +55,9 @@ type
   private
     { Private declarations }
     AppRoot: String;
+    CodeRoot: String;
+    DefaultCode: String;
+    FirstRun: Boolean;
     FTask: ITask;
     SystemAvailable: Boolean;
     SystemActivated: Boolean;
@@ -62,7 +66,10 @@ type
     procedure UpdateStatus(const AStatus: String);
     function IsTaskRunning: boolean;
     procedure CreateSystem;
+    procedure LoadDefaultCode;
+    procedure ShimSysPath(const ShimPath: String);
     procedure RunCode();
+    procedure ExecutePython(const PythonCode: TStrings);
   public
     { Public declarations }
   end;
@@ -91,13 +98,19 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
-  AppRoot := TPath.GetLibraryPath;
+  AppRoot := IncludeTrailingPathDelimiter(TPath.GetLibraryPath);
+  CodeRoot := AppRoot;
+  FirstRun := True;
+  DefaultCode := AppRoot + 'testcode.py';
   SystemAvailable := False;
   SystemActivated := False;
   LogMemo.ReadOnly := True;
   LogMemo.Lines.Clear;
   Log('Getting Ready');
-  CodeMemo.Lines.LoadFromFile(AppRoot + 'testcode.py');
+  if not FileExists(DefaultCode) then
+    CodeMemo.Lines.Clear
+  else
+    CodeMemo.Lines.LoadFromFile(DefaultCode);
   CreateSystem;
   EnableForm(False);
 end;
@@ -239,6 +252,24 @@ begin
     end;
 end;
 
+procedure TForm1.LoadDefaultCode;
+begin
+  if not FileExists(DefaultCode) then
+    begin
+      dlgOpenDefaultCode.InitialDir := CodeRoot;
+      if dlgOpenDefaultCode.Execute then
+      begin
+        DefaultCode := dlgOpenDefaultCode.FileName;
+        CodeRoot := IncludeTrailingPathDelimiter(ExtractFileDir(dlgOpenDefaultCode.FileName));
+        CodeMemo.Lines.LoadFromFile(DefaultCode);
+      end
+    else
+      CodeMemo.Lines.Clear;
+    end
+  else
+    CodeMemo.Lines.LoadFromFile(DefaultCode);
+end;
+
 ///// Startup Code Execution /////
 
 procedure TForm1.btnRunCodeClick(Sender: TObject);
@@ -248,8 +279,51 @@ end;
 
 procedure TForm1.btnReLoadClick(Sender: TObject);
 begin
-  CodeMemo.Lines.LoadFromFile(AppRoot + 'testcode.py');
+  LoadDefaultCode;
 end;
+
+procedure TForm1.ShimSysPath(const ShimPath: String);
+var
+  Shim: TStringList;
+begin
+  try
+    Shim := TStringList.Create;
+    Shim.Add('import sys');
+    Shim.Add('sys.path.append("' + CodeRoot + ShimPath + '")');
+    PyEngine.ExecStrings(Shim);
+  finally
+    Shim.Free;
+  end;
+end;
+
+procedure TForm1.ExecutePython(const PythonCode: TStrings);
+begin
+  try
+    if FirstRun then
+      begin
+        ShimSysPath('pysrc');
+        FirstRun := False;
+      end;
+    PyEngine.ExecStrings(PythonCode);
+  except
+    on E: EPyIndentationError do
+      begin
+        Log('Indentation Exception : Line = ' + IntToStr(E.ELineNumber) +
+            ', Offset = ' + IntToStr(E.EOffset));
+      end;
+    on E: EPyImportError do
+      begin
+        Log('Import Exception : ' + E.EValue + ' : ' + E.EName);
+      end;
+    on E: Exception do
+      begin
+        Log('Unhandled Exception');
+        Log('Class : ' + E.ClassName);
+        Log('Error : ' + E.Message);
+      end;
+  end;
+end;
+
 
 procedure TForm1.RunCode();
 begin
@@ -258,25 +332,7 @@ begin
       LogMemo.Lines.Clear;
       try
         MaskFPUExceptions(True);
-        try
-          PyEngine.ExecStrings(CodeMemo.Lines);
-        except
-          on E: EPyIndentationError do
-            begin
-              Log('Indentation Exception : Line = ' + IntToStr(E.ELineNumber) +
-                  ', Offset = ' + IntToStr(E.EOffset));
-            end;
-          on E: EPyImportError do
-            begin
-              Log('Import Exception : ' + E.EValue + ' : ' + E.EName);
-            end;
-          on E: Exception do
-            begin
-              Log('Unhandled Exception');
-              Log('Class : ' + E.ClassName);
-              Log('Error : ' + E.Message);
-            end;
-        end;
+        ExecutePython(CodeMemo.Lines);
       finally
           MaskFPUExceptions(False);
       end;

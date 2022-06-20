@@ -1,11 +1,5 @@
 import os
 import sys
-sys.path.append(os.getcwd() + '\pysrc')
-for p in sys.path:
-    print(p)
-
-import argparse
-from argparse import Namespace
 import time
 import logging
 import torch
