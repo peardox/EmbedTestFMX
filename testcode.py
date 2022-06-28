@@ -1,3 +1,4 @@
+import props
 import os
 import sys
 import time
@@ -8,10 +9,11 @@ from cmdfuncts import *
 
 
 def check_gpu():
+    gpu_supported = False
     try:
         torch.cuda.init()
         if(torch.cuda.is_available()):
-            gpu_supported = 1
+            gpu_supported = True
             print("CUDA Available : ",torch.cuda.is_available())
             print("CUDA Devices : ",torch.cuda.device_count())
             print("CUDA Arch List : ",torch.cuda.get_arch_list())
@@ -24,7 +26,6 @@ def check_gpu():
                 # print(torch.cuda.memory_summary(x))
     except:
         print("No supported GPUs detected")
-        gpu_supported = 0
 
     print("GPU Support : ", gpu_supported);
     return gpu_supported
@@ -40,29 +41,31 @@ def show_elapsed(from_time):
     print("Elapsed time = %d hours %d mins %d secs" % (hour, minutes, seconds))
 
 def do_train(opts = None):
-    use_gpu = check_gpu()
+    is_gpu_available = check_gpu()
     
     if opts == None:
-        opts = TProperties(epochs=1,
+        opts = TProperties(dataset="/train/unsplash/256",
+            style_image="/dae/batch/256/color/random_sketch_1.jpg",
+            model_name="test-dae-sketch1-256",
+            model_dir="models",
+            checkpoint_model_dir="",
+            model_ext = ".pth",
+            net="vgg19",
+            logfile="",
+            epochs=2,
             limit=0,
-            batch_size=4,
-            force_size=1,
-            dataset="/train/unsplash/256",
-            style_image="style-images/mona.jpg",
-            model_name="test",
-            save_model_dir="models",
-            checkpoint_model_dir=None,
+            batch_size=8,
+            log_interval=500,
+            checkpoint_interval=1000,
             image_size=256,
-            style_size=None,
-            logfile=None,
-            ignore_gpu=1,
             seed=42,
             content_weight=1e5,
             style_weight=1e10,
             lr=1e-3,
-            net="vgg19",
-            log_interval=500,
-            checkpoint_interval=1000)
+            style_scale=1.0,
+            force_size=True,
+            ignore_gpu=False,
+			cuda=True)
 
 #    check_paths(args)
     trial_batch = opts.batch_size
@@ -72,7 +75,10 @@ def do_train(opts = None):
         oom = False
         try:
             print("Trying batch of ", trial_batch)
-            train(opts, use_gpu, trial_batch)
+            if opts.ignore_gpu:
+                train(opts, False, trial_batch)
+            else:
+                train(opts, is_gpu_available, trial_batch)
         except RuntimeError as e:
             print("Hit exception handler")
             if trial_batch > 0:
@@ -85,7 +91,7 @@ def do_train(opts = None):
 
         if oom:
             trial_batch -= 1
-            if use_gpu:
+            if is_gpu_available and not opts.ignore_gpu:
                 torch.cuda.empty_cache()
             if trial_batch == 0:
                 print("No batch size found to run current training session (style image too large)")
@@ -94,45 +100,91 @@ def do_train(opts = None):
     show_elapsed(start)
     
 def do_stylize(opts = None):
-    use_gpu = check_gpu()
+    is_gpu_available = check_gpu()
     
     if opts == None:
-        opts = TProperties( content_image = "input-images\haywain.jpg",
+        opts = TProperties( content_image = "input-images\\haywain.jpg",
             content_image_raw = None,
-            output_image = "output-images\output2.jpg",
-            model = "mosaic-vgg16-1010-512",
+            output_image = "output-images\\test-dae-sketch1-512.jpg",
+            model = "test-dae-sketch1-512",
+            # model = "mosaic-vgg16-1010-512",
             model_dir = "models",
+            model_ext = ".pth",
+            logfile = "".
             content_scale = 1,
-            cuda = 0,
-            ignore_gpu = 0,
-            export_onnx = None,
-            movie = None,
-            add_model_ext = 1,
-            logfile = None)
+            cuda = True,
+            ignore_gpu = False,
+            export_onnx = False,
+            add_model_ext = True)
 
     start = time.time()
-    stylize(opts, use_gpu)
+    if opts.ignore_gpu:
+        stylize(opts, False)
+    else:
+        stylize(opts, is_gpu_available)
     show_elapsed(start)
 
-class TProperties:
-  def __init__(self, **kwargs):
-    self.__dict__.update(kwargs)
+def do_test(opts = None):
+    # is_gpu_available = check_gpu()
+    
+    if opts == None:
+        opts = TStylize( content_image = "input-images\\haywain.jpg",
+            content_image_raw = None,
+            output_image = "output-images\\test-dae-sketch1-512.jpg",
+            model = "test-dae-sketch1-512",
+            # model = "mosaic-vgg16-1010-512",
+            model_dir = "models",
+            model_ext = ".pth",
+            logfile = ""
+            content_scale = 1,
+            cuda = True,
+            ignore_gpu = False,
+            export_onnx = False,
+            add_model_ext = True
+            )
 
-  def __getattr__(Self, Key):
-      return props.GetProperty(Key)
+    for k, v in opts.items():
+        print(k, '=', v)
 
-  def __setattr__(Self, Key, Value):
-      props.SetProperty(Key, Value)
+def delphi_test():
+    is_gpu_available = check_gpu()
 
-  def __repr__(Self):
-    tmp = ""
+    style = TProperties()
+
     for i in props.GetPropertyList():
-      if tmp:
-        tmp = tmp + ", "
-      tmp = tmp + i + " = " + str(getattr(Self,i))
-    return tmp
+        print(i, '=', props.GetProperty(i))
+
+    start = time.time()
+
+    if style.ignore_gpu:
+        stylize(style, False)
+    else:
+        stylize(style, is_gpu_available)
+
+    show_elapsed(start)
+
+class TStylize(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__dict__ = self
+        
+class TProperties:
+    def __getattr__(Self, Key):
+        return props.GetProperty(Key)
+
+    def __setattr__(Self, Key, Value):
+        props.SetProperty(Key, Value)
+
+    def __repr__(Self):
+        tmp = ""
+        for i in props.GetPropertyList():
+            if tmp:
+                tmp = tmp + ", "
+            tmp = tmp + i + " = " + str(getattr(Self,i))
+        return tmp
 
 if __name__ == "__main__":
-    do_stylize()
 #    do_train()
-    
+#    do_stylize()
+#    do_test()
+    delphi_test()

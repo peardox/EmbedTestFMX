@@ -66,6 +66,7 @@ Win64/
 Win32/
 Android64/
 OSX64/
+notes/
 
 # Castalia statistics file (since XE7 Castalia is distributed with Delphi)
 *.stat
