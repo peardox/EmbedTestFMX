@@ -10,49 +10,10 @@ uses
   FMX.Memo, PyEnvironment.Embeddable.Res, PyEnvironment.Embeddable.Res.Python39,
   PythonEngine, PyEnvironment, PyEnvironment.Embeddable, TorchVision, PyTorch,
   NumPy, PyCommon, PyModule, PyPackage, SciPy, FMX.PythonGUIInputOutput,
-  FMX.Menus, Skia.FMX, FMX.Objects;
+  FMX.Menus, Skia.FMX, FMX.Objects,
+  Modules;
 
 type
-  TTrainingOptions = record
-    dataset: String;
-    style_image: String;
-    model_name: String;
-    model_dir: String;
-    model_ext: String;
-    checkpoint_model_dir: String;
-    net: String;
-    logfile: String;
-    epochs: Integer;
-    limit: Integer;
-    batch_size: Integer;
-    log_interval: Integer;
-    checkpoint_interval: Integer;
-    image_size: Integer;
-    seed: Integer;
-    content_weight: Single;
-    style_weight: Single;
-    lr: Single;
-    style_scale: Single;
-    force_size: Boolean;
-    ignore_gpu: Boolean;
-    cuda: Boolean;
-  end;
-
-  TStylizeOptions = record
-    content_image: String;
-    content_image_raw: String;
-    output_image: String;
-    model: String;
-    model_dir: String;
-    model_ext: String;
-    logfile: String;
-    content_scale: Single;
-    cuda: Boolean;
-    ignore_gpu: Boolean;
-    export_onnx: Boolean;
-    add_model_ext: Boolean;
-  end;
-
   TForm1 = class(TForm)
     StatusBar1: TStatusBar;
     TabControl1: TTabControl;
@@ -91,6 +52,8 @@ type
     btnReLoad: TSpeedButton;
     btnLoadCode: TSpeedButton;
     PythonModule1: TPythonModule;
+    btnStyleTest: TButton;
+    ContentImage: TImage;
     procedure PyIOSendUniData(Sender: TObject; const Data: string);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -113,6 +76,7 @@ type
     procedure MenuItem3Click(Sender: TObject);
     procedure cbCleanOnExitChange(Sender: TObject);
     procedure PythonModule1Initialization(Sender: TObject);
+    procedure btnStyleTestClick(Sender: TObject);
   private
     { Private declarations }
     AppRoot: String;
@@ -141,9 +105,9 @@ type
     procedure ReLoadCode;
     procedure LoadImage;
 
-    function GetProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
-    function SetProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
-    function GetPropertyList(pSelf, Args : PPyObject) : PPyObject; cdecl;
+    function GetStyleProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+    function SetStyleProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+    function GetStylePropertyList(pSelf, Args : PPyObject) : PPyObject; cdecl;
   public
     { Public declarations }
   end;
@@ -151,12 +115,48 @@ type
 var
   Form1: TForm1;
 
-function CreateDefaultStylizeOptions: TStylizeOptions;
-function CreateDefaultTrainingOptions: TTrainingOptions;
+function EscapeBackslashForPython(const AStr: String): String;
 
 implementation
 
 {$R *.fmx}
+
+uses
+  VarPyth,
+  Math;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  AppRoot := IncludeTrailingPathDelimiter(System.IOUtils.TPath.GetLibraryPath);
+  CodeRoot := AppRoot;
+  ImageRoot := AppRoot;
+  ContentImageFileName := String.Empty;
+  ContentBitmap := Nil;
+  LastShimPath := String.Empty;
+  FirstRun := True;
+  PythonCode := AppRoot + 'testcode.py';
+  SystemAvailable := False;
+  SystemActivated := False;
+  LogMemo.ReadOnly := True;
+  LogMemo.Lines.Clear;
+  Log('AppRoot : ' + AppRoot);
+  UpdateStatus('Initializing');
+  Log('Initializing');
+
+  StylizeOptions := CreateDefaultStylizeOptions;
+  TrainingOptions := CreateDefaultTrainingOptions;
+
+
+  if not FileExists(PythonCode) then
+  begin
+    CodeMemo.Lines.Clear;
+    ShowMessage('Code not found : ' + PythonCode);
+  end
+  else
+    CodeMemo.Lines.LoadFromFile(PythonCode);
+  CreateSystem;
+  EnableForm(False);
+end;
 
 procedure TForm1.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
@@ -178,40 +178,6 @@ begin
     ContentBitmap := Nil;
   end;
 
-end;
-
-procedure TForm1.FormCreate(Sender: TObject);
-begin
-  if (DebugHook <> 0) then
-    AppRoot := IncludeTrailingPathDelimiter(System.IOUtils.TPath.GetFullPath(IncludeTrailingPathDelimiter(System.IOUtils.TPath.GetLibraryPath + '..' + PathDelim + '..' + PathDelim)))
-  else
-    AppRoot := IncludeTrailingPathDelimiter(System.IOUtils.TPath.GetLibraryPath);
-  CodeRoot := AppRoot;
-  ImageRoot := AppRoot;
-  ContentImageFileName := String.Empty;
-  ContentBitmap := Nil;
-  LastShimPath := String.Empty;
-  FirstRun := True;
-  PythonCode := AppRoot + 'testcode.py';
-  SystemAvailable := False;
-  SystemActivated := False;
-  LogMemo.ReadOnly := True;
-  LogMemo.Lines.Clear;
-  UpdateStatus('Initializing');
-  Log('Initializing');
-
-  StylizeOptions := CreateDefaultStylizeOptions;
-  TrainingOptions := CreateDefaultTrainingOptions;
-
-  if not FileExists(PythonCode) then
-  begin
-    CodeMemo.Lines.Clear;
-    ShowMessage('Code not found : ' + PythonCode);
-  end
-  else
-    CodeMemo.Lines.LoadFromFile(PythonCode);
-  CreateSystem;
-  EnableForm(False);
 end;
 
 function TForm1.IsTaskRunning: boolean;
@@ -420,6 +386,17 @@ begin
   RunCode();
 end;
 
+procedure TForm1.btnStyleTestClick(Sender: TObject);
+var
+  _im: Variant;
+begin
+  RunCode();
+  _im := MainModule.delphi_test();
+  ContentImageFileName := _im;
+  Log('_im (' + ContentImageFileName + ') is a ' + VarTypeAsText(VarType(_im)));
+  ContentImage.Bitmap.LoadFromFile(ContentImageFileName);
+end;
+
 procedure TForm1.cbCleanOnExitChange(Sender: TObject);
 begin
   if cbCleanOnExit.IsChecked then
@@ -445,11 +422,11 @@ begin
     if not(LastShimPath = String.Empty) then
     begin
       Shim.Add('for p in reversed(sys.path):');
-      Shim.Add('  if p == "' + LastShimPath + '":');
+      Shim.Add('  if p == "' + EscapeBackslashForPython(LastShimPath) + '":');
       Shim.Add('    sys.path.remove(p)');
     end;
-    Shim.Add('sys.path.append("' + CodeRoot + ShimPath + '")');
-    Shim.Add('os.chdir("' + ExcludeTrailingPathDelimiter(CodeRoot) + '")');
+    Shim.Add('sys.path.append("' + EscapeBackslashForPython(CodeRoot + ShimPath) + '")');
+    Shim.Add('os.chdir("' + EscapeBackslashForPython(ExcludeTrailingPathDelimiter(CodeRoot)) + '")');
 
     Log('Shim');
     for var i := 0 to Shim.Count - 1 do
@@ -545,33 +522,18 @@ begin
 end;
 
 ///// Style Module Definitions /////
-function CreateDefaultStylizeOptions: TStylizeOptions;
-begin
-  Result.content_image := 'input-images/haywain.jpg';
-  Result.content_image_raw := String.Empty;
-  Result.output_image := 'output-images/delphi-test.jpg';
-  Result.model := 'test-dae-gothic-256';
-  Result.model_dir := 'models';
-  Result.model_ext := '.pth';
-  Result.logfile := String.Empty;
-  Result.content_scale := 1;
-  Result.cuda := True;
-  Result.ignore_gpu := False;
-  Result.export_onnx := False;
-  Result.add_model_ext := True;
-end;
 
 procedure TForm1.PythonModule1Initialization(Sender: TObject);
 begin
   with Sender as TPythonModule do
     begin
-      AddDelphiMethod( 'GetProperty', GetProperty, 'GetProperty(PropName) -> PropValue' );
-      AddDelphiMethod( 'SetProperty', SetProperty, 'SetProperty(PropName, PropValue) -> None' );
-      AddDelphiMethod( 'GetPropertyList', GetPropertyList, 'GetPropertyList() -> List of property names' );
+      AddDelphiMethod( 'GetProperty', GetStyleProperty, 'GetProperty(PropName) -> PropValue' );
+      AddDelphiMethod( 'SetProperty', SetStyleProperty, 'SetProperty(PropName, PropValue) -> None' );
+      AddDelphiMethod( 'GetPropertyList', GetStylePropertyList, 'GetPropertyList() -> List of property names' );
     end;
 end;
 
-function TForm1.GetProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+function TForm1.GetStyleProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
 var
   key : PAnsiChar;
 begin
@@ -612,7 +574,7 @@ begin
       Result := nil;
 end;
 
-function TForm1.SetProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+function TForm1.SetStyleProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
 var
   key : PAnsiChar;
   value : PPyObject;
@@ -690,7 +652,7 @@ begin
       Result := nil;
 end;
 
-function TForm1.GetPropertyList(pSelf, Args : PPyObject) : PPyObject; cdecl;
+function TForm1.GetStylePropertyList(pSelf, Args : PPyObject) : PPyObject; cdecl;
 begin
   with GetPythonEngine do
     begin
@@ -711,31 +673,12 @@ begin
 end;
 
 ///// Training Module Definitions /////
-function CreateDefaultTrainingOptions: TTrainingOptions;
-begin
-  Result.dataset := '/train/unsplash/256';
-  Result.style_image := 'style-images/flowers.jpg';
-  Result.model_name := 'gui-flowers-256-4';
-  Result.model_dir := 'models';
-  Result.model_ext := '.pth';
-  Result.checkpoint_model_dir := '';
-  Result.net := 'vgg16';
-  Result.logfile := '';
-  Result.epochs := 4;
-  Result.limit := 0;
-  Result.batch_size := 1;
-  Result.log_interval := 500;
-  Result.checkpoint_interval := 1000;
-  Result.image_size := 256;
-  Result.seed := 42;
-  Result.content_weight := 1e5;
-  Result.style_weight := 1e10;
-  Result.lr := 1e-3;
-  Result.style_scale := 1.0;
-  Result.force_size := True;
-  Result.ignore_gpu := False;
-  Result.cuda := True
-end;
 
+///// Misc Functions /////
+
+function EscapeBackslashForPython(const AStr: String): String;
+begin
+  Result := StringReplace(AStr, '\', '\\', [rfIgnoreCase, rfReplaceAll]);
+end;
 
 end.

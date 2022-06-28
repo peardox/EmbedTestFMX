@@ -301,7 +301,8 @@ def stylize(args, use_gpu):
             else:
                 output = style_model(content_image).cpu()
     utils.save_image(args.output_image, output[0])
-
+    return (args.output_image)
+    
 def stylize_onnx(content_image, args):
     """
     Read ONNX model and run it using onnxruntime

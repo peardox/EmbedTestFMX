@@ -1,4 +1,4 @@
-import props
+import pstylize
 import os
 import sys
 import time
@@ -110,7 +110,7 @@ def do_stylize(opts = None):
             # model = "mosaic-vgg16-1010-512",
             model_dir = "models",
             model_ext = ".pth",
-            logfile = "".
+            logfile = "",
             content_scale = 1,
             cuda = True,
             ignore_gpu = False,
@@ -135,7 +135,7 @@ def do_test(opts = None):
             # model = "mosaic-vgg16-1010-512",
             model_dir = "models",
             model_ext = ".pth",
-            logfile = ""
+            logfile = "",
             content_scale = 1,
             cuda = True,
             ignore_gpu = False,
@@ -149,20 +149,21 @@ def do_test(opts = None):
 def delphi_test():
     is_gpu_available = check_gpu()
 
-    style = TProperties()
+    style = TDelphiStylize()
 
-    for i in props.GetPropertyList():
-        print(i, '=', props.GetProperty(i))
+    for i in pstylize.GetPropertyList():
+        print(i, '=', pstylize.GetProperty(i))
 
     start = time.time()
 
     if style.ignore_gpu:
-        stylize(style, False)
+        rval = stylize(style, False)
     else:
-        stylize(style, is_gpu_available)
+        rval = stylize(style, is_gpu_available)
 
     show_elapsed(start)
-
+    return (rval)
+    
 class TStylize(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -183,8 +184,23 @@ class TProperties:
             tmp = tmp + i + " = " + str(getattr(Self,i))
         return tmp
 
-if __name__ == "__main__":
+class TDelphiStylize:
+    def __getattr__(Self, Key):
+        return pstylize.GetProperty(Key)
+
+    def __setattr__(Self, Key, Value):
+        pstylize.SetProperty(Key, Value)
+
+    def __repr__(Self):
+        tmp = ""
+        for i in pstylize.GetPropertyList():
+            if tmp:
+                tmp = tmp + ", "
+            tmp = tmp + i + " = " + str(getattr(Self,i))
+        return tmp
+
+#if __name__ == "__main__":
 #    do_train()
 #    do_stylize()
 #    do_test()
-    delphi_test()
+#    delphi_test()
