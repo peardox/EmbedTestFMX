@@ -44,9 +44,9 @@ def do_train(opts = None):
     is_gpu_available = check_gpu()
     
     if opts == None:
-        opts = TProperties(dataset="/train/unsplash/256",
-            style_image="/dae/batch/256/color/random_sketch_1.jpg",
-            model_name="test-dae-sketch1-256",
+        opts = TTrain(dataset="/train/unsplash/256",
+            style_image="style-images/gig.jpg",
+            model_name="gig-256",
             model_dir="models",
             checkpoint_model_dir="",
             model_ext = ".pth",
@@ -65,7 +65,8 @@ def do_train(opts = None):
             style_scale=1.0,
             force_size=True,
             ignore_gpu=False,
-			cuda=True)
+			cuda=True,
+            log_event_api=False)
 
 #    check_paths(args)
     trial_batch = opts.batch_size
@@ -103,7 +104,7 @@ def do_stylize(opts = None):
     is_gpu_available = check_gpu()
     
     if opts == None:
-        opts = TProperties( content_image = "input-images\\haywain.jpg",
+        opts = TStylize( content_image = "input-images\\haywain.jpg",
             content_image_raw = None,
             output_image = "output-images\\test-dae-sketch1-512.jpg",
             model = "test-dae-sketch1-512",
@@ -115,7 +116,8 @@ def do_stylize(opts = None):
             cuda = True,
             ignore_gpu = False,
             export_onnx = False,
-            add_model_ext = True)
+            add_model_ext = True,
+            log_event_api = False)
 
     start = time.time()
     if opts.ignore_gpu:
@@ -140,7 +142,8 @@ def do_test(opts = None):
             cuda = True,
             ignore_gpu = False,
             export_onnx = False,
-            add_model_ext = True
+            add_model_ext = True,
+            log_event_api = False
             )
 
     for k, v in opts.items():
@@ -165,6 +168,11 @@ def delphi_test():
     return (rval)
     
 class TStylize(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__dict__ = self
+        
+class TTrain(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__dict__ = self
@@ -199,8 +207,8 @@ class TDelphiStylize:
             tmp = tmp + i + " = " + str(getattr(Self,i))
         return tmp
 
-#if __name__ == "__main__":
-#    do_train()
+if __name__ == "__main__":
+    do_train()
 #    do_stylize()
 #    do_test()
 #    delphi_test()

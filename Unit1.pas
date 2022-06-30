@@ -11,7 +11,7 @@ uses
   PythonEngine, PyEnvironment, PyEnvironment.Embeddable, TorchVision, PyTorch,
   NumPy, PyCommon, PyModule, PyPackage, SciPy, FMX.PythonGUIInputOutput,
   FMX.Menus, Skia.FMX, FMX.Objects,
-  Modules;
+  Modules, PSUtil;
 
 type
   TForm1 = class(TForm)
@@ -54,6 +54,7 @@ type
     PythonModule1: TPythonModule;
     btnStyleTest: TButton;
     ContentImage: TImage;
+    PSUtil1: TPSUtil;
     procedure PyIOSendUniData(Sender: TObject; const Data: string);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -320,6 +321,9 @@ begin
         end);
         FTask.CheckCanceled();
 
+        PSUtil1.Install();
+        FTask.CheckCanceled();
+
         Numpy1.Install();
         FTask.CheckCanceled();
 
@@ -334,6 +338,7 @@ begin
 
         TThread.Queue(nil, procedure() begin
 {
+          PSUtil1.Import();
           Numpy1.Import();
           PyTorch1.Import();
           TorchVision1.Import();
