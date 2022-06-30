@@ -51,10 +51,11 @@ type
     btnRunCode: TSpeedButton;
     btnReLoad: TSpeedButton;
     btnLoadCode: TSpeedButton;
-    PythonModule1: TPythonModule;
+    modStylize: TPythonModule;
     btnStyleTest: TButton;
     ContentImage: TImage;
     PSUtil1: TPSUtil;
+    modTrain: TPythonModule;
     procedure PyIOSendUniData(Sender: TObject; const Data: string);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -75,9 +76,12 @@ type
     procedure btnRunCodeClick(Sender: TObject);
     procedure MenuItem6Click(Sender: TObject);
     procedure MenuItem3Click(Sender: TObject);
-    procedure cbCleanOnExitChange(Sender: TObject);
-    procedure PythonModule1Initialization(Sender: TObject);
+    procedure modStylizeInitialization(Sender: TObject);
     procedure btnStyleTestClick(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure PyEmbedEnvBeforeDeactivate(Sender: TObject;
+      const APythonVersion: string);
+    procedure modTrainInitialization(Sender: TObject);
   private
     { Private declarations }
     AppRoot: String;
@@ -95,7 +99,6 @@ type
     TrainingOptions: TTrainingOptions;
 
     procedure EnableForm(Enable: Boolean);
-    procedure Log(AMsg: String);
     procedure UpdateStatus(const AStatus: String);
     function IsTaskRunning: boolean;
     procedure CreateSystem;
@@ -105,12 +108,18 @@ type
     procedure LoadCode;
     procedure ReLoadCode;
     procedure LoadImage;
+    procedure UpdateProgressForm(const AStatus: String);
 
     function GetStyleProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
     function SetStyleProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
     function GetStylePropertyList(pSelf, Args : PPyObject) : PPyObject; cdecl;
+
+    function GetTrainProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+    function SetTrainProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+    function GetTrainPropertyList(pSelf, Args : PPyObject) : PPyObject; cdecl;
   public
     { Public declarations }
+    procedure Log(AMsg: String);
   end;
 
 var
@@ -123,6 +132,7 @@ implementation
 {$R *.fmx}
 
 uses
+  Unit2,
   VarPyth,
   Math;
 
@@ -142,6 +152,7 @@ begin
   LogMemo.Lines.Clear;
   Log('AppRoot : ' + AppRoot);
   UpdateStatus('Initializing');
+
   Log('Initializing');
 
   StylizeOptions := CreateDefaultStylizeOptions;
@@ -156,7 +167,13 @@ begin
   else
     CodeMemo.Lines.LoadFromFile(PythonCode);
   CreateSystem;
+
   EnableForm(False);
+end;
+
+procedure TForm1.FormShow(Sender: TObject);
+begin
+    frmProgress.Show;
 end;
 
 procedure TForm1.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -200,6 +217,20 @@ begin
     begin
       lblStatus.Text := AStatus;
       StatusBar1.Repaint;
+    end;
+end;
+
+procedure TForm1.UpdateProgressForm(const AStatus: String);
+begin
+  if TThread.CurrentThread.ThreadID <> MainThreadID then
+    TThread.Synchronize(nil, procedure() begin
+       if Assigned(frmProgress) then
+         frmProgress.ShowProgress(AStatus);
+    end)
+  else
+    begin
+      if Assigned(frmProgress) then
+        frmProgress.ShowProgress(AStatus);
     end;
 end;
 
@@ -263,17 +294,25 @@ begin
   TPyManagedPackage(Sender).BeforeImport := PackageBeforeImport;
 
   MaskFPUExceptions(True);
+  if TPyPackage(Sender).PyModuleName = 'torch' then
+    UpdateProgressForm('Installing ' + TPyPackage(Sender).PyModuleName +
+      '\n\n' +
+      'This will take quite some time, please be patient')
+  else
+    UpdateProgressForm('Installing ' + TPyPackage(Sender).PyModuleName);
   Log('Installing ' + TPyPackage(Sender).PyModuleName);
   UpdateStatus('Installing ' + TPyPackage(Sender).PyModuleName);
 end;
 
 procedure TForm1.PackageAfterInstall(Sender: TObject);
 begin
+  UpdateProgressForm('Installed ' + TPyPackage(Sender).PyModuleName);
   Log('Installed ' + TPyPackage(Sender).PyModuleName);
 end;
 
 procedure TForm1.PackageBeforeImport(Sender: TObject);
 begin
+  UpdateProgressForm('Importing ' + TPyPackage(Sender).PyModuleName);
   Log('Importing ' + TPyPackage(Sender).PyModuleName);
   UpdateStatus('Importing ' + TPyPackage(Sender).PyModuleName);
   MaskFPUExceptions(True);
@@ -281,6 +320,8 @@ end;
 
 procedure TForm1.PackageInstallError(Sender: TObject; AErrorMessage: string);
 begin
+  UpdateProgressForm('Installation Error  ' + TPyPackage(Sender).PyModuleName + AErrorMessage);
+
   Log(TPyPackage(Sender).PyModuleName + ' : ' + AErrorMessage);
 end;
 
@@ -294,6 +335,7 @@ procedure TForm1.CreateSystem;
 begin
   if not SystemAvailable then
     begin
+      UpdateProgressForm('Creating System');
       Log('Creating System');
       Log('===============');
       Log('Home : ' + System.IOUtils.TPath.GetHomePath);
@@ -314,9 +356,11 @@ begin
       Log('===============');
       MaskFPUExceptions(True);
       FTask := TTask.Run(procedure() begin
+        UpdateProgressForm('Checking System');
         PyEmbedEnv.Setup(PyEmbedEnv.PythonVersion);
         FTask.CheckCanceled();
         TThread.Synchronize(nil, procedure() begin
+          UpdateProgressForm('Activating System');
           PyEmbedEnv.Activate(PyEmbedEnv.PythonVersion);
         end);
         FTask.CheckCanceled();
@@ -337,6 +381,7 @@ begin
         FTask.CheckCanceled();
 
         TThread.Queue(nil, procedure() begin
+        UpdateProgressForm('System Ready');
 {
           PSUtil1.Import();
           Numpy1.Import();
@@ -348,6 +393,7 @@ begin
           UpdateStatus('Ready');
           SystemAvailable := True;
           EnableForm(True);
+          frmProgress.Hide;
         end);
       end);
     end;
@@ -402,14 +448,6 @@ begin
   ContentImage.Bitmap.LoadFromFile(ContentImageFileName);
 end;
 
-procedure TForm1.cbCleanOnExitChange(Sender: TObject);
-begin
-  if cbCleanOnExit.IsChecked then
-    pnlCodeView.Visible := False
-  else
-    pnlCodeView.Visible := True;
-end;
-
 procedure TForm1.btnReLoadClick(Sender: TObject);
 begin
   ReLoadCode;
@@ -432,6 +470,7 @@ begin
     end;
     Shim.Add('sys.path.append("' + EscapeBackslashForPython(CodeRoot + ShimPath) + '")');
     Shim.Add('os.chdir("' + EscapeBackslashForPython(ExcludeTrailingPathDelimiter(CodeRoot)) + '")');
+    Shim.Add('__embedded_python__ = True');
 
     Log('Shim');
     for var i := 0 to Shim.Count - 1 do
@@ -513,6 +552,18 @@ begin
   if cbCleanOnExit.IsChecked then
     begin
       TDirectory.Delete(PyEmbedEnv.EnvironmentPath, True);
+      frmProgress.Hide;
+    end;
+end;
+
+procedure TForm1.PyEmbedEnvBeforeDeactivate(Sender: TObject;
+  const APythonVersion: string);
+begin
+  if cbCleanOnExit.IsChecked then
+    begin
+      frmProgress.Caption := 'Cleaning System';
+      frmProgress.Show;
+      UpdateProgressForm('Cleaning System ...');
     end;
 end;
 
@@ -528,7 +579,7 @@ end;
 
 ///// Style Module Definitions /////
 
-procedure TForm1.PythonModule1Initialization(Sender: TObject);
+procedure TForm1.modStylizeInitialization(Sender: TObject);
 begin
   with Sender as TPythonModule do
     begin
@@ -678,6 +729,235 @@ begin
 end;
 
 ///// Training Module Definitions /////
+
+procedure TForm1.modTrainInitialization(Sender: TObject);
+begin
+  with Sender as TPythonModule do
+    begin
+      AddDelphiMethod( 'GetProperty', GetTrainProperty, 'GetProperty(PropName) -> PropValue' );
+      AddDelphiMethod( 'SetProperty', SetTrainProperty, 'SetProperty(PropName, PropValue) -> None' );
+      AddDelphiMethod( 'GetPropertyList', GetTrainPropertyList, 'GetPropertyList() -> List of property names' );
+    end;
+end;
+
+function TForm1.GetTrainProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+var
+  key : PAnsiChar;
+begin
+  with GetPythonEngine do
+    if PyArg_ParseTuple( args, 's:GetProperty',@key ) <> 0 then
+      begin
+        if key = 'dataset' then
+          Result := VariantAsPyObject(TrainingOptions.dataset)
+        else if key = 'style_image' then
+          Result := VariantAsPyObject(TrainingOptions.style_image)
+        else if key = 'logfile' then
+          Result := VariantAsPyObject(TrainingOptions.logfile)
+        else if key = 'net' then
+          Result := VariantAsPyObject(TrainingOptions.net)
+        else if key = 'checkpoint_model_dir' then
+          Result := VariantAsPyObject(TrainingOptions.checkpoint_model_dir)
+        else if key = 'model_ext' then
+          Result := VariantAsPyObject(TrainingOptions.model_ext)
+        else if key = 'model_dir' then
+          Result := VariantAsPyObject(TrainingOptions.model_dir)
+        else if key = 'model_name' then
+          Result := VariantAsPyObject(TrainingOptions.model_name)
+        else if key = 'epochs' then
+          Result := VariantAsPyObject(TrainingOptions.epochs)
+        else if key = 'limit' then
+          Result := VariantAsPyObject(TrainingOptions.limit)
+        else if key = 'batch_size' then
+          Result := VariantAsPyObject(TrainingOptions.batch_size)
+        else if key = 'log_interval' then
+          Result := VariantAsPyObject(TrainingOptions.log_interval)
+        else if key = 'checkpoint_interval' then
+          Result := VariantAsPyObject(TrainingOptions.checkpoint_interval)
+        else if key = 'image_size' then
+          Result := VariantAsPyObject(TrainingOptions.image_size)
+        else if key = 'seed' then
+          Result := VariantAsPyObject(TrainingOptions.seed)
+        else if key = 'content_weight' then
+          Result := VariantAsPyObject(TrainingOptions.content_weight)
+        else if key = 'style_weight' then
+          Result := VariantAsPyObject(TrainingOptions.style_weight)
+        else if key = 'lr' then
+          Result := VariantAsPyObject(TrainingOptions.lr)
+        else if key = 'style_scale' then
+          Result := VariantAsPyObject(TrainingOptions.style_scale)
+        else if key = 'force_size' then
+          Result := VariantAsPyObject(TrainingOptions.force_size)
+        else if key = 'ignore_gpu' then
+          Result := VariantAsPyObject(TrainingOptions.ignore_gpu)
+        else if key = 'cuda' then
+          Result := VariantAsPyObject(TrainingOptions.cuda)
+        else
+          begin
+            PyErr_SetString (PyExc_AttributeError^, PAnsiChar(Format('Unknown property "%s"', [key])));
+            Result := nil;
+          end;
+      end
+    else
+      Result := nil;
+end;
+
+function TForm1.SetTrainProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+var
+  key : PAnsiChar;
+  value : PPyObject;
+begin
+  with GetPythonEngine do
+    if PyArg_ParseTuple( args, 'sO:SetProperty',@key, @value ) <> 0 then
+      begin
+        if key = 'dataset' then
+          begin
+            TrainingOptions.dataset := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'style_image' then
+          begin
+            TrainingOptions.style_image := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'model_name' then
+          begin
+            TrainingOptions.model_name := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'model_dir' then
+          begin
+            TrainingOptions.model_dir := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'model_ext' then
+          begin
+            TrainingOptions.model_ext := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'checkpoint_model_dir' then
+          begin
+            TrainingOptions.checkpoint_model_dir := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'net' then
+          begin
+            TrainingOptions.net := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'logfile' then
+          begin
+            TrainingOptions.logfile := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'epochs' then
+          begin
+            TrainingOptions.epochs := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'limit' then
+          begin
+            TrainingOptions.limit := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'batch_size' then
+          begin
+            TrainingOptions.batch_size := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'log_interval' then
+          begin
+            TrainingOptions.log_interval := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'checkpoint_interval' then
+          begin
+            TrainingOptions.checkpoint_interval := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'image_size' then
+          begin
+            TrainingOptions.image_size := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'seed' then
+          begin
+            TrainingOptions.seed := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'content_weight' then
+          begin
+            TrainingOptions.content_weight := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'style_weight' then
+          begin
+            TrainingOptions.style_weight := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'lr' then
+          begin
+            TrainingOptions.lr := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'style_scale' then
+          begin
+            TrainingOptions.style_scale := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'force_size' then
+          begin
+            TrainingOptions.force_size := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'ignore_gpu' then
+          begin
+            TrainingOptions.ignore_gpu := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'cuda' then
+          begin
+            TrainingOptions.cuda := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else
+          begin
+            PyErr_SetString (PyExc_AttributeError^, PAnsiChar(Format('Unknown property "%s"', [key])));
+            Result := nil;
+          end;
+      end
+    else
+      Result := nil;
+end;
+
+function TForm1.GetTrainPropertyList(pSelf, Args : PPyObject) : PPyObject; cdecl;
+begin
+  with GetPythonEngine do
+    begin
+      Result := PyList_New(22);
+      PyList_SetItem(Result,  0, PyUnicodeFromString('dataset'));
+      PyList_SetItem(Result,  1, PyUnicodeFromString('style_image'));
+      PyList_SetItem(Result,  2, PyUnicodeFromString('model_name'));
+      PyList_SetItem(Result,  3, PyUnicodeFromString('model_dir'));
+      PyList_SetItem(Result,  4, PyUnicodeFromString('model_ext'));
+      PyList_SetItem(Result,  5, PyUnicodeFromString('checkpoint_model_dir'));
+      PyList_SetItem(Result,  6, PyUnicodeFromString('net'));
+      PyList_SetItem(Result,  7, PyUnicodeFromString('logfile'));
+      PyList_SetItem(Result,  8, PyUnicodeFromString('epochs'));
+      PyList_SetItem(Result,  9, PyUnicodeFromString('limit'));
+      PyList_SetItem(Result, 10, PyUnicodeFromString('batch_size'));
+      PyList_SetItem(Result, 11, PyUnicodeFromString('log_interval'));
+      PyList_SetItem(Result, 12, PyUnicodeFromString('checkpoint_interval'));
+      PyList_SetItem(Result, 13, PyUnicodeFromString('image_size'));
+      PyList_SetItem(Result, 14, PyUnicodeFromString('seed'));
+      PyList_SetItem(Result, 15, PyUnicodeFromString('content_weight'));
+      PyList_SetItem(Result, 16, PyUnicodeFromString('style_weight'));
+      PyList_SetItem(Result, 17, PyUnicodeFromString('lr'));
+      PyList_SetItem(Result, 18, PyUnicodeFromString('style_scale'));
+      PyList_SetItem(Result, 19, PyUnicodeFromString('force_size'));
+      PyList_SetItem(Result, 20, PyUnicodeFromString('ignore_gpu'));
+      PyList_SetItem(Result, 21, PyUnicodeFromString('cuda'));
+    end;
+end;
 
 ///// Misc Functions /////
 

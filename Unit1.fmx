@@ -9,6 +9,7 @@ object Form1: TForm1
   FormFactor.Devices = [Desktop]
   OnCreate = FormCreate
   OnCloseQuery = FormCloseQuery
+  OnShow = FormShow
   DesignerMasterStyle = 0
   object StatusBar1: TStatusBar
     Position.Y = 630.000000000000000000
@@ -25,7 +26,6 @@ object Form1: TForm1
       Size.PlatformDefault = False
       TabOrder = 0
       Text = 'Clean on Exit'
-      OnChange = cbCleanOnExitChange
     end
     object lblStatus: TLabel
       Align = Left
@@ -144,8 +144,8 @@ object Form1: TForm1
             Size.Height = 451.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 0
-            Viewport.Width = 1130.000000000000000000
-            Viewport.Height = 447.000000000000000000
+            Viewport.Width = 1134.000000000000000000
+            Viewport.Height = 451.000000000000000000
           end
         end
         object CodeBtnPanel: TPanel
@@ -212,8 +212,8 @@ object Form1: TForm1
           Size.PlatformDefault = False
           TabOrder = 0
           TabStop = False
-          Viewport.Width = 1130.000000000000000000
-          Viewport.Height = 116.000000000000000000
+          Viewport.Width = 1134.000000000000000000
+          Viewport.Height = 120.000000000000000000
         end
       end
       object Splitter1: TSplitter
@@ -325,6 +325,7 @@ object Form1: TForm1
   end
   object PyEmbedEnv: TPyEmbeddedResEnvironment39
     AfterActivate = PyEmbedEnvAfterActivate
+    BeforeDeactivate = PyEmbedEnvBeforeDeactivate
     AfterDeactivate = PyEmbedEnvAfterDeactivate
     AutoLoad = False
     PythonVersion = '3.9'
@@ -342,13 +343,13 @@ object Form1: TForm1
     Left = 168
     Top = 208
   end
-  object PythonModule1: TPythonModule
+  object modStylize: TPythonModule
     Engine = PyEngine
-    OnInitialization = PythonModule1Initialization
+    OnInitialization = modStylizeInitialization
     ModuleName = 'pstylize'
     Errors = <>
-    Left = 304
-    Top = 208
+    Left = 96
+    Top = 144
   end
   object PSUtil1: TPSUtil
     PythonEngine = PyEngine
@@ -356,5 +357,13 @@ object Form1: TForm1
     BeforeInstall = PackageConfigureInstall
     Left = 32
     Top = 272
+  end
+  object modTrain: TPythonModule
+    Engine = PyEngine
+    OnInitialization = modTrainInitialization
+    ModuleName = 'ptrain'
+    Errors = <>
+    Left = 168
+    Top = 144
   end
 end

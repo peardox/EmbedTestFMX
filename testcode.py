@@ -1,12 +1,63 @@
-import pstylize
+try:
+    import pstylize
+except Exception as e:
+    print("Missing pstylize")
+    
+try:
+    import ptrain
+except Exception as e:
+    print("Missing ptrain")
+    
 import os
 import sys
 import time
 import logging
 import torch
+import json
 from mlfuncts import *
 from cmdfuncts import *
 
+have_psutils = True
+try:
+    import psutil
+except Exception as e:
+    have_psutils = False
+
+def get_sys_info():
+    if gpu_supported:
+        d = torch.cuda.get_device_name(0)
+        t = torch.cuda.get_device_properties(0).total_memory
+        r = torch.cuda.memory_reserved(0)
+        a = torch.cuda.memory_allocated(0)
+        f = r-a  # free inside reserved
+    
+        gpu = TJsonLog(
+            device = d,
+            free = f,
+            reserved = r,
+            allocated = a,
+            total = t)
+
+    if have_psutils:
+        m = psutil.virtual_memory()
+        mem = TJsonLog(
+            total = m.total,
+            available = m.available,
+            percent = m.percent,
+            used = m.used,
+            free = m.free)
+
+    if have_psutils and gpu_supported:
+        stats = TJsonLog(gpu = gpu, mem = mem)
+    elif have_psutils and not gpu_supported:
+        stats = TJsonLog(gpu = False, mem = mem)
+    elif not have_psutils and gpu_supported:
+        stats = TJsonLog(gpu = gpu, mem = False)
+    else:
+        stats = TJsonLog(gpu = False, mem = False)
+        
+    return(stats)
+    
 
 def check_gpu():
     gpu_supported = False
@@ -14,20 +65,9 @@ def check_gpu():
         torch.cuda.init()
         if(torch.cuda.is_available()):
             gpu_supported = True
-            print("CUDA Available : ",torch.cuda.is_available())
-            print("CUDA Devices : ",torch.cuda.device_count())
-            print("CUDA Arch List : ",torch.cuda.get_arch_list())
-            for x in range(torch.cuda.device_count()):
-                print("CUDA Capabilities : ",torch.cuda.get_device_capability(x))
-                print("CUDA Device Name : ",torch.cuda.get_device_name(x))
-                # logging.info("CUDA Device Name : " + torch.cuda.get_device_name(x))
-                print("CUDA Device Memory : ",torch.cuda.mem_get_info(x))
-                print("CUDA Device Properties : ",torch.cuda.get_device_properties(x))
-                # print(torch.cuda.memory_summary(x))
     except:
-        print("No supported GPUs detected")
+        pass
 
-    print("GPU Support : ", gpu_supported);
     return gpu_supported
 
 def show_elapsed(from_time):
@@ -177,6 +217,11 @@ class TTrain(dict):
         super().__init__(*args, **kwargs)
         self.__dict__ = self
         
+class TJsonLog(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__dict__ = self
+        
 class TProperties:
     def __getattr__(Self, Key):
         return props.GetProperty(Key)
@@ -207,8 +252,36 @@ class TDelphiStylize:
             tmp = tmp + i + " = " + str(getattr(Self,i))
         return tmp
 
-if __name__ == "__main__":
-    do_train()
+class TDelphiTrain:
+    def __getattr__(Self, Key):
+        return ptrain.GetProperty(Key)
+
+    def __setattr__(Self, Key, Value):
+        ptrain.SetProperty(Key, Value)
+
+    def __repr__(Self):
+        tmp = ""
+        for i in ptrain.GetPropertyList():
+            if tmp:
+                tmp = tmp + ", "
+            tmp = tmp + i + " = " + str(getattr(Self,i))
+        return tmp
+
+def do_main():
+#    do_train()
 #    do_stylize()
 #    do_test()
 #    delphi_test()
+    print("Crap");
+    
+try:
+    if not __embedded_python__:
+        do_main()
+except NameError:
+    # Only run main if called explicitly
+    if __name__ == "__main__":
+        do_main()
+else:
+    gpu_supported = check_gpu()
+    print("Using Embedded Environment")
+    print(json.dumps(get_sys_info()))

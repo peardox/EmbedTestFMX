@@ -275,6 +275,10 @@
             <FormType>fmx</FormType>
         </DCCReference>
         <DCCReference Include="Modules.pas"/>
+        <DCCReference Include="Unit2.pas">
+            <Form>frmProgress</Form>
+            <FormType>fmx</FormType>
+        </DCCReference>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

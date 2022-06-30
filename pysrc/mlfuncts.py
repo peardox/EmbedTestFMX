@@ -21,8 +21,6 @@ have_psutils = True
 try:
     import psutil
 except Exception as e:
-    print(e)
-    print('Exception type is:', e.__class__.__name__)
     have_psutils = False
 
 def get_gpu_memory(have_psutils):

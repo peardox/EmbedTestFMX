@@ -1,0 +1,20 @@
+object frmProgress: TfrmProgress
+  Left = 0
+  Top = 0
+  Caption = 'Initialization Progress'
+  ClientHeight = 229
+  ClientWidth = 564
+  Position = OwnerFormCenter
+  FormStyle = StayOnTop
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object txtProgress: TText
+    Position.X = 104.000000000000000000
+    Position.Y = 48.000000000000000000
+    Size.Width = 385.000000000000000000
+    Size.Height = 113.000000000000000000
+    Size.PlatformDefault = False
+  end
+end
