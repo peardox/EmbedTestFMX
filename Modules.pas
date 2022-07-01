@@ -29,6 +29,7 @@ type
     force_size: Boolean;
     ignore_gpu: Boolean;
     cuda: Boolean;
+    log_event_api: Boolean;
   end;
 
   TStylizeOptions = record
@@ -72,17 +73,17 @@ end;
 ///// Training Module Definitions /////
 function CreateDefaultTrainingOptions: TTrainingOptions;
 begin
-  Result.dataset := '/train/unsplash/256';
-  Result.style_image := 'style-images/flowers.jpg';
-  Result.model_name := 'gui-flowers-256-4';
+  Result.dataset := '/git/artogo/datasets/train/unsplash/lite/256';
+  Result.style_image := 'style-images/ass.jpg';
+  Result.model_name := 'test-ass2';
   Result.model_dir := 'models';
   Result.model_ext := '.pth';
   Result.checkpoint_model_dir := '';
   Result.net := 'vgg16';
   Result.logfile := '';
-  Result.epochs := 4;
+  Result.epochs := 2;
   Result.limit := 0;
-  Result.batch_size := 1;
+  Result.batch_size := 12;
   Result.log_interval := 500;
   Result.checkpoint_interval := 1000;
   Result.image_size := 256;
@@ -93,7 +94,8 @@ begin
   Result.style_scale := 1.0;
   Result.force_size := True;
   Result.ignore_gpu := False;
-  Result.cuda := True
+  Result.cuda := True;
+  Result.log_event_api := True;
 end;
 
 

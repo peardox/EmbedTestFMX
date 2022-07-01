@@ -56,6 +56,9 @@ type
     ContentImage: TImage;
     PSUtil1: TPSUtil;
     modTrain: TPythonModule;
+    Panel3: TPanel;
+    Panel4: TPanel;
+    btnTrainTest: TButton;
     procedure PyIOSendUniData(Sender: TObject; const Data: string);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -82,6 +85,7 @@ type
     procedure PyEmbedEnvBeforeDeactivate(Sender: TObject;
       const APythonVersion: string);
     procedure modTrainInitialization(Sender: TObject);
+    procedure btnTrainTestClick(Sender: TObject);
   private
     { Private declarations }
     AppRoot: String;
@@ -442,10 +446,21 @@ var
   _im: Variant;
 begin
   RunCode();
-  _im := MainModule.delphi_test();
+  _im := MainModule.delphi_style_test();
   ContentImageFileName := _im;
   Log('_im (' + ContentImageFileName + ') is a ' + VarTypeAsText(VarType(_im)));
   ContentImage.Bitmap.LoadFromFile(ContentImageFileName);
+end;
+
+procedure TForm1.btnTrainTestClick(Sender: TObject);
+var
+  _im: Variant;
+begin
+  RunCode();
+  _im := MainModule.delphi_train_test();
+  ContentImageFileName := _im;
+  Log('_im (' + ContentImageFileName + ') is a ' + VarTypeAsText(VarType(_im)));
+//  StyleImage.Bitmap.LoadFromFile(ContentImageFileName);
 end;
 
 procedure TForm1.btnReLoadClick(Sender: TObject);

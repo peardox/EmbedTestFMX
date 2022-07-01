@@ -189,20 +189,41 @@ def do_test(opts = None):
     for k, v in opts.items():
         print(k, '=', v)
 
-def delphi_test():
+def delphi_train_test():
     is_gpu_available = check_gpu()
 
-    style = TDelphiStylize()
+    trainopts = TDelphiTrain()
+
+    for i in ptrain.GetPropertyList():
+        print(i, '=', ptrain.GetProperty(i))
+    
+    rval = "Hello world"
+    
+    trial_batch = 1
+    
+    start = time.time()
+    if trainopts.ignore_gpu:
+        rval = train(trainopts, False, trial_batch)
+    else:
+        rval = train(trainopts, is_gpu_available, trial_batch)
+
+    show_elapsed(start)
+    return (rval)
+    
+def delphi_style_test():
+    is_gpu_available = check_gpu()
+
+    styleopts = TDelphiStylize()
 
     for i in pstylize.GetPropertyList():
         print(i, '=', pstylize.GetProperty(i))
 
     start = time.time()
 
-    if style.ignore_gpu:
-        rval = stylize(style, False)
+    if styleopts.ignore_gpu:
+        rval = stylize(styleopts, False)
     else:
-        rval = stylize(style, is_gpu_available)
+        rval = stylize(styleopts, is_gpu_available)
 
     show_elapsed(start)
     return (rval)

@@ -40,7 +40,7 @@ object Form1: TForm1
     Size.Width = 1134.000000000000000000
     Size.Height = 630.000000000000000000
     Size.PlatformDefault = False
-    TabIndex = 2
+    TabIndex = 1
     TabOrder = 2
     TabPosition = PlatformDefault
     Sizes = (
@@ -99,7 +99,7 @@ object Form1: TForm1
       CustomIcon = <
         item
         end>
-      IsSelected = False
+      IsSelected = True
       Size.Width = 46.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
@@ -108,12 +108,34 @@ object Form1: TForm1
       Text = 'Train'
       ExplicitSize.cx = 46.000000000000000000
       ExplicitSize.cy = 26.000000000000000000
+      object Panel3: TPanel
+        Align = Client
+        Size.Width = 960.000000000000000000
+        Size.Height = 604.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+      end
+      object Panel4: TPanel
+        Align = Right
+        Position.X = 960.000000000000000000
+        Size.Width = 174.000000000000000000
+        Size.Height = 604.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        object btnTrainTest: TButton
+          Position.X = 56.000000000000000000
+          Position.Y = 16.000000000000000000
+          TabOrder = 1
+          Text = 'btnTrainTest'
+          OnClick = btnTrainTestClick
+        end
+      end
     end
     object TabItem3: TTabItem
       CustomIcon = <
         item
         end>
-      IsSelected = True
+      IsSelected = False
       Size.Width = 48.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
@@ -144,8 +166,8 @@ object Form1: TForm1
             Size.Height = 451.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 0
-            Viewport.Width = 1134.000000000000000000
-            Viewport.Height = 451.000000000000000000
+            Viewport.Width = 1130.000000000000000000
+            Viewport.Height = 447.000000000000000000
           end
         end
         object CodeBtnPanel: TPanel
@@ -212,8 +234,8 @@ object Form1: TForm1
           Size.PlatformDefault = False
           TabOrder = 0
           TabStop = False
-          Viewport.Width = 1134.000000000000000000
-          Viewport.Height = 120.000000000000000000
+          Viewport.Width = 1130.000000000000000000
+          Viewport.Height = 116.000000000000000000
         end
       end
       object Splitter1: TSplitter
