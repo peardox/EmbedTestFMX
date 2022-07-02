@@ -3,7 +3,7 @@ program EmbedTestFMX;
 uses
   System.StartUpCopy,
   FMX.Forms,
-  Unit1 in 'Unit1.pas' {Form1},
+  Unit1 in 'Unit1.pas' {frmMain},
   Modules in 'Modules.pas',
   Unit2 in 'Unit2.pas' {frmProgress};
 
@@ -11,7 +11,7 @@ uses
 
 begin
   Application.Initialize;
-  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TfrmMain, frmMain);
   Application.CreateForm(TfrmProgress, frmProgress);
   Application.Run;
 end.

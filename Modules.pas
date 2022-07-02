@@ -45,6 +45,22 @@ type
     ignore_gpu: Boolean;
     export_onnx: Boolean;
     add_model_ext: Boolean;
+    log_event_api: Boolean;
+  end;
+
+  TTrainLog = record
+    image_count: Integer;
+    train_elapsed: Single;
+    train_interval: Single;
+    content_loss: Integer;
+    style_loss: Integer;
+    total_loss: Integer;
+    reporting_line: Integer;
+    train_completion: Single;
+    total_images: Integer;
+    train_eta: Single;
+    train_left: Single;
+    train_delta: Single;
   end;
 
 
@@ -68,14 +84,15 @@ begin
   Result.ignore_gpu := False;
   Result.export_onnx := False;
   Result.add_model_ext := True;
+  Result.log_event_api := True;
 end;
 
 ///// Training Module Definitions /////
 function CreateDefaultTrainingOptions: TTrainingOptions;
 begin
   Result.dataset := '/git/artogo/datasets/train/unsplash/lite/256';
-  Result.style_image := 'style-images/ass.jpg';
-  Result.model_name := 'test-ass2';
+  Result.style_image := 'style-images/dae_mosaic_1-2048.jpg';
+  Result.model_name := 'dae_mosaic_1-2048';
   Result.model_dir := 'models';
   Result.model_ext := '.pth';
   Result.checkpoint_model_dir := '';

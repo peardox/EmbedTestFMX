@@ -1,13 +1,4 @@
-try:
-    import pstylize
-except Exception as e:
-    print("Missing pstylize")
-    
-try:
-    import ptrain
-except Exception as e:
-    print("Missing ptrain")
-    
+from delphifuncts import *
 import os
 import sys
 import time
@@ -258,36 +249,6 @@ class TProperties:
             tmp = tmp + i + " = " + str(getattr(Self,i))
         return tmp
 
-class TDelphiStylize:
-    def __getattr__(Self, Key):
-        return pstylize.GetProperty(Key)
-
-    def __setattr__(Self, Key, Value):
-        pstylize.SetProperty(Key, Value)
-
-    def __repr__(Self):
-        tmp = ""
-        for i in pstylize.GetPropertyList():
-            if tmp:
-                tmp = tmp + ", "
-            tmp = tmp + i + " = " + str(getattr(Self,i))
-        return tmp
-
-class TDelphiTrain:
-    def __getattr__(Self, Key):
-        return ptrain.GetProperty(Key)
-
-    def __setattr__(Self, Key, Value):
-        ptrain.SetProperty(Key, Value)
-
-    def __repr__(Self):
-        tmp = ""
-        for i in ptrain.GetPropertyList():
-            if tmp:
-                tmp = tmp + ", "
-            tmp = tmp + i + " = " + str(getattr(Self,i))
-        return tmp
-
 def do_main():
 #    do_train()
 #    do_stylize()
@@ -306,3 +267,12 @@ else:
     gpu_supported = check_gpu()
     print("Using Embedded Environment")
     print(json.dumps(get_sys_info()))
+
+    styleopts = TDelphiStylize()
+    for i in pstylize.GetPropertyList():
+        print(i, '=', pstylize.GetProperty(i))
+
+
+    trainopts = TDelphiTrain()
+    for i in ptrain.GetPropertyList():
+        print(i, '=', ptrain.GetProperty(i))

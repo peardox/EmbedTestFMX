@@ -14,7 +14,7 @@ uses
   Modules, PSUtil;
 
 type
-  TForm1 = class(TForm)
+  TfrmMain = class(TForm)
     StatusBar1: TStatusBar;
     TabControl1: TTabControl;
     TabItem1: TTabItem;
@@ -55,10 +55,11 @@ type
     btnStyleTest: TButton;
     ContentImage: TImage;
     PSUtil1: TPSUtil;
-    modTrain: TPythonModule;
     Panel3: TPanel;
     Panel4: TPanel;
     btnTrainTest: TButton;
+    modTrain: TPythonModule;
+    TrainMemo: TMemo;
     procedure PyIOSendUniData(Sender: TObject; const Data: string);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -86,6 +87,8 @@ type
       const APythonVersion: string);
     procedure modTrainInitialization(Sender: TObject);
     procedure btnTrainTestClick(Sender: TObject);
+    procedure modTrainEvents0Execute(Sender: TObject; PSelf, Args: PPyObject;
+      var Result: PPyObject);
   private
     { Private declarations }
     AppRoot: String;
@@ -127,7 +130,7 @@ type
   end;
 
 var
-  Form1: TForm1;
+  frmMain: TfrmMain;
 
 function EscapeBackslashForPython(const AStr: String): String;
 
@@ -140,7 +143,7 @@ uses
   VarPyth,
   Math;
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TfrmMain.FormCreate(Sender: TObject);
 begin
   AppRoot := IncludeTrailingPathDelimiter(System.IOUtils.TPath.GetLibraryPath);
   CodeRoot := AppRoot;
@@ -175,12 +178,12 @@ begin
   EnableForm(False);
 end;
 
-procedure TForm1.FormShow(Sender: TObject);
+procedure TfrmMain.FormShow(Sender: TObject);
 begin
     frmProgress.Show;
 end;
 
-procedure TForm1.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   Log('Trying to close');
   if IsTaskRunning() then begin
@@ -202,7 +205,7 @@ begin
 
 end;
 
-function TForm1.IsTaskRunning: boolean;
+function TfrmMain.IsTaskRunning: boolean;
 begin
   if FTask = Nil then
     Result := False
@@ -210,7 +213,7 @@ begin
     Result := not (FTask.Status in [TTaskStatus.Completed, TTaskStatus.Exception]);
 end;
 
-procedure TForm1.UpdateStatus(const AStatus: String);
+procedure TfrmMain.UpdateStatus(const AStatus: String);
 begin
   if TThread.CurrentThread.ThreadID <> MainThreadID then
     TThread.Synchronize(nil, procedure() begin
@@ -224,7 +227,7 @@ begin
     end;
 end;
 
-procedure TForm1.UpdateProgressForm(const AStatus: String);
+procedure TfrmMain.UpdateProgressForm(const AStatus: String);
 begin
   if TThread.CurrentThread.ThreadID <> MainThreadID then
     TThread.Synchronize(nil, procedure() begin
@@ -239,7 +242,7 @@ begin
 end;
 
 
-procedure TForm1.Log(AMsg: String);
+procedure TfrmMain.Log(AMsg: String);
 begin
   if TThread.CurrentThread.ThreadID <> MainThreadID then
   begin
@@ -256,12 +259,12 @@ begin
   end;
 end;
 
-procedure TForm1.MenuItem3Click(Sender: TObject);
+procedure TfrmMain.MenuItem3Click(Sender: TObject);
 begin
   LoadImage;
 end;
 
-procedure TForm1.LoadImage;
+procedure TfrmMain.LoadImage;
 begin
   dlgOpenImage.InitialDir := ImageRoot;
   if dlgOpenImage.Execute then
@@ -275,12 +278,12 @@ begin
 end;
 
 
-procedure TForm1.MenuItem6Click(Sender: TObject);
+procedure TfrmMain.MenuItem6Click(Sender: TObject);
 begin
   LoadCode;
 end;
 
-procedure TForm1.EnableForm(Enable: Boolean);
+procedure TfrmMain.EnableForm(Enable: Boolean);
 begin
   btnRunCode.Enabled := Enable;
   btnReLoad.Enabled := Enable;
@@ -289,7 +292,7 @@ begin
   CodeMemo.Enabled := Enable;
 end;
 
-procedure TForm1.PackageConfigureInstall(Sender: TObject);
+procedure TfrmMain.PackageConfigureInstall(Sender: TObject);
 begin
 //  TPyManagedPackage(Sender).PythonEngine := PyEngine;
 //  TPyManagedPackage(Sender).PyEnvironment := PyEmbedEnv;
@@ -308,13 +311,13 @@ begin
   UpdateStatus('Installing ' + TPyPackage(Sender).PyModuleName);
 end;
 
-procedure TForm1.PackageAfterInstall(Sender: TObject);
+procedure TfrmMain.PackageAfterInstall(Sender: TObject);
 begin
   UpdateProgressForm('Installed ' + TPyPackage(Sender).PyModuleName);
   Log('Installed ' + TPyPackage(Sender).PyModuleName);
 end;
 
-procedure TForm1.PackageBeforeImport(Sender: TObject);
+procedure TfrmMain.PackageBeforeImport(Sender: TObject);
 begin
   UpdateProgressForm('Importing ' + TPyPackage(Sender).PyModuleName);
   Log('Importing ' + TPyPackage(Sender).PyModuleName);
@@ -322,20 +325,20 @@ begin
   MaskFPUExceptions(True);
 end;
 
-procedure TForm1.PackageInstallError(Sender: TObject; AErrorMessage: string);
+procedure TfrmMain.PackageInstallError(Sender: TObject; AErrorMessage: string);
 begin
   UpdateProgressForm('Installation Error  ' + TPyPackage(Sender).PyModuleName + AErrorMessage);
 
   Log(TPyPackage(Sender).PyModuleName + ' : ' + AErrorMessage);
 end;
 
-procedure TForm1.PyIOSendUniData(Sender: TObject; const Data: string);
+procedure TfrmMain.PyIOSendUniData(Sender: TObject; const Data: string);
 begin
   Log(Data);
   Application.ProcessMessages;
 end;
 
-procedure TForm1.CreateSystem;
+procedure TfrmMain.CreateSystem;
 begin
   if not SystemAvailable then
     begin
@@ -403,7 +406,7 @@ begin
     end;
 end;
 
-procedure TForm1.LoadCode;
+procedure TfrmMain.LoadCode;
 begin
   dlgOpenCode.InitialDir := CodeRoot;
   if dlgOpenCode.Execute then
@@ -415,7 +418,7 @@ begin
   end;
 end;
 
-procedure TForm1.ReLoadCode;
+procedure TfrmMain.ReLoadCode;
 begin
   if not FileExists(PythonCode) then
   begin
@@ -436,12 +439,12 @@ end;
 
 ///// Startup Code Execution /////
 
-procedure TForm1.btnRunCodeClick(Sender: TObject);
+procedure TfrmMain.btnRunCodeClick(Sender: TObject);
 begin
   RunCode();
 end;
 
-procedure TForm1.btnStyleTestClick(Sender: TObject);
+procedure TfrmMain.btnStyleTestClick(Sender: TObject);
 var
   _im: Variant;
 begin
@@ -452,10 +455,11 @@ begin
   ContentImage.Bitmap.LoadFromFile(ContentImageFileName);
 end;
 
-procedure TForm1.btnTrainTestClick(Sender: TObject);
+procedure TfrmMain.btnTrainTestClick(Sender: TObject);
 var
   _im: Variant;
 begin
+  TabControl1.ActiveTab := TabItem3;
   RunCode();
   _im := MainModule.delphi_train_test();
   ContentImageFileName := _im;
@@ -463,12 +467,12 @@ begin
 //  StyleImage.Bitmap.LoadFromFile(ContentImageFileName);
 end;
 
-procedure TForm1.btnReLoadClick(Sender: TObject);
+procedure TfrmMain.btnReLoadClick(Sender: TObject);
 begin
   ReLoadCode;
 end;
 
-procedure TForm1.ShimSysPath(const ShimPath: String);
+procedure TfrmMain.ShimSysPath(const ShimPath: String);
 var
   Shim: TStringList;
 begin
@@ -499,7 +503,7 @@ begin
   end;
 end;
 
-procedure TForm1.ExecutePython(const PythonCode: TStrings);
+procedure TfrmMain.ExecutePython(const PythonCode: TStrings);
 begin
   try
     if FirstRun then
@@ -528,7 +532,7 @@ begin
 end;
 
 
-procedure TForm1.RunCode();
+procedure TfrmMain.RunCode();
 begin
   if SystemAvailable then
     begin
@@ -544,7 +548,7 @@ end;
 
 ///// Python Setup /////
 
-procedure TForm1.PyEmbedEnvZipProgress(Sender: TObject;
+procedure TfrmMain.PyEmbedEnvZipProgress(Sender: TObject;
   ADistribution: TPyCustomEmbeddableDistribution; FileName: string;
   Header: TZipHeader; Position: Int64);
 begin
@@ -553,14 +557,14 @@ end;
 
 ///// Python Startup /////
 
-procedure TForm1.PyEmbedEnvAfterActivate(Sender: TObject;
+procedure TfrmMain.PyEmbedEnvAfterActivate(Sender: TObject;
   const APythonVersion: string; const AActivated: Boolean);
 begin
   if AActivated then
     Log('Python ' + APythonVersion + ' Active');
 end;
 
-procedure TForm1.PyEmbedEnvAfterDeactivate(Sender: TObject;
+procedure TfrmMain.PyEmbedEnvAfterDeactivate(Sender: TObject;
   const APythonVersion: string);
 begin
   SystemActivated := False;
@@ -571,7 +575,7 @@ begin
     end;
 end;
 
-procedure TForm1.PyEmbedEnvBeforeDeactivate(Sender: TObject;
+procedure TfrmMain.PyEmbedEnvBeforeDeactivate(Sender: TObject;
   const APythonVersion: string);
 begin
   if cbCleanOnExit.IsChecked then
@@ -582,19 +586,19 @@ begin
     end;
 end;
 
-procedure TForm1.PyEngineBeforeUnload(Sender: TObject);
+procedure TfrmMain.PyEngineBeforeUnload(Sender: TObject);
 begin
   Log('PyEngineBeforeUnload'); // SBDbg
 end;
 
-procedure TForm1.PyEngineSysPathInit(Sender: TObject; PathList: PPyObject);
+procedure TfrmMain.PyEngineSysPathInit(Sender: TObject; PathList: PPyObject);
 begin
   Log('PyEngineSysPathInit'); // SBDbg
 end;
 
 ///// Style Module Definitions /////
 
-procedure TForm1.modStylizeInitialization(Sender: TObject);
+procedure TfrmMain.modStylizeInitialization(Sender: TObject);
 begin
   with Sender as TPythonModule do
     begin
@@ -604,7 +608,7 @@ begin
     end;
 end;
 
-function TForm1.GetStyleProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+function TfrmMain.GetStyleProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
 var
   key : PAnsiChar;
 begin
@@ -645,7 +649,7 @@ begin
       Result := nil;
 end;
 
-function TForm1.SetStyleProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+function TfrmMain.SetStyleProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
 var
   key : PAnsiChar;
   value : PPyObject;
@@ -723,7 +727,7 @@ begin
       Result := nil;
 end;
 
-function TForm1.GetStylePropertyList(pSelf, Args : PPyObject) : PPyObject; cdecl;
+function TfrmMain.GetStylePropertyList(pSelf, Args : PPyObject) : PPyObject; cdecl;
 begin
   with GetPythonEngine do
     begin
@@ -745,7 +749,52 @@ end;
 
 ///// Training Module Definitions /////
 
-procedure TForm1.modTrainInitialization(Sender: TObject);
+procedure TfrmMain.modTrainEvents0Execute(Sender: TObject; PSelf, Args: PPyObject;
+  var Result: PPyObject);
+var
+  AMsg: String;
+  log: TTrainLog;
+begin
+  with GetPythonEngine do
+  begin
+    // Check if the transmitted object is a dictionary
+    {
+    log.image_count := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
+    log.train_elapsed := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
+    log.train_interval := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
+    log.content_loss := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
+    log.style_loss := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
+    log.total_loss := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
+    log.reporting_line := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
+    log.train_completion := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
+    log.total_images := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
+    log.train_eta := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
+    log.train_left := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
+    log.train_delta := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
+
+    }
+//    AMsg := GetTypeAsString(Args);
+    AMsg := PyObjectAsString(Args);
+    if TThread.CurrentThread.ThreadID <> MainThreadID then
+    begin
+      TThread.Synchronize(nil, procedure() begin
+       TrainMemo.Lines.Add(AMsg);
+       TrainMemo.GoToTextEnd;
+       TrainMemo.GoToLineBegin;
+       TrainMemo.Repaint;
+      end);
+    end
+    else
+    begin
+      TrainMemo.Lines.Add(AMsg);
+      TrainMemo.GoToTextEnd;
+      TrainMemo.GoToLineBegin;
+    end;
+    Result := PyUnicodeFromString('===> Logline Recorded');
+  end;
+end;
+
+procedure TfrmMain.modTrainInitialization(Sender: TObject);
 begin
   with Sender as TPythonModule do
     begin
@@ -755,7 +804,7 @@ begin
     end;
 end;
 
-function TForm1.GetTrainProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+function TfrmMain.GetTrainProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
 var
   key : PAnsiChar;
 begin
@@ -806,6 +855,8 @@ begin
           Result := VariantAsPyObject(TrainingOptions.ignore_gpu)
         else if key = 'cuda' then
           Result := VariantAsPyObject(TrainingOptions.cuda)
+        else if key = 'log_event_api' then
+          Result := VariantAsPyObject(TrainingOptions.log_event_api)
         else
           begin
             PyErr_SetString (PyExc_AttributeError^, PAnsiChar(Format('Unknown property "%s"', [key])));
@@ -816,7 +867,7 @@ begin
       Result := nil;
 end;
 
-function TForm1.SetTrainProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+function TfrmMain.SetTrainProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
 var
   key : PAnsiChar;
   value : PPyObject;
@@ -934,6 +985,11 @@ begin
             TrainingOptions.cuda := PyObjectAsVariant( value );
             Result := ReturnNone;
           end
+        else if key = 'log_event_api' then
+          begin
+            TrainingOptions.log_event_api := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
         else
           begin
             PyErr_SetString (PyExc_AttributeError^, PAnsiChar(Format('Unknown property "%s"', [key])));
@@ -944,11 +1000,11 @@ begin
       Result := nil;
 end;
 
-function TForm1.GetTrainPropertyList(pSelf, Args : PPyObject) : PPyObject; cdecl;
+function TfrmMain.GetTrainPropertyList(pSelf, Args : PPyObject) : PPyObject; cdecl;
 begin
   with GetPythonEngine do
     begin
-      Result := PyList_New(22);
+      Result := PyList_New(23);
       PyList_SetItem(Result,  0, PyUnicodeFromString('dataset'));
       PyList_SetItem(Result,  1, PyUnicodeFromString('style_image'));
       PyList_SetItem(Result,  2, PyUnicodeFromString('model_name'));
@@ -971,6 +1027,7 @@ begin
       PyList_SetItem(Result, 19, PyUnicodeFromString('force_size'));
       PyList_SetItem(Result, 20, PyUnicodeFromString('ignore_gpu'));
       PyList_SetItem(Result, 21, PyUnicodeFromString('cuda'));
+      PyList_SetItem(Result, 22, PyUnicodeFromString('log_event_api'));
     end;
 end;
 

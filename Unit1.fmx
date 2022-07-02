@@ -1,7 +1,7 @@
-object Form1: TForm1
+object frmMain: TfrmMain
   Left = 0
   Top = 0
-  Caption = 'Form1'
+  Caption = 'Lartis'
   ClientHeight = 652
   ClientWidth = 1134
   FormFactor.Width = 320
@@ -40,7 +40,7 @@ object Form1: TForm1
     Size.Width = 1134.000000000000000000
     Size.Height = 630.000000000000000000
     Size.PlatformDefault = False
-    TabIndex = 1
+    TabIndex = 0
     TabOrder = 2
     TabPosition = PlatformDefault
     Sizes = (
@@ -54,7 +54,7 @@ object Form1: TForm1
       CustomIcon = <
         item
         end>
-      IsSelected = False
+      IsSelected = True
       Size.Width = 46.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
@@ -99,7 +99,7 @@ object Form1: TForm1
       CustomIcon = <
         item
         end>
-      IsSelected = True
+      IsSelected = False
       Size.Width = 46.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
@@ -114,6 +114,18 @@ object Form1: TForm1
         Size.Height = 604.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 0
+        object TrainMemo: TMemo
+          Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+          DataDetectorTypes = []
+          Position.X = 64.000000000000000000
+          Position.Y = 48.000000000000000000
+          Size.Width = 857.000000000000000000
+          Size.Height = 505.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 0
+          Viewport.Width = 853.000000000000000000
+          Viewport.Height = 501.000000000000000000
+        end
       end
       object Panel4: TPanel
         Align = Right
@@ -125,7 +137,7 @@ object Form1: TForm1
         object btnTrainTest: TButton
           Position.X = 56.000000000000000000
           Position.Y = 16.000000000000000000
-          TabOrder = 1
+          TabOrder = 0
           Text = 'btnTrainTest'
           OnClick = btnTrainTestClick
         end
@@ -329,7 +341,7 @@ object Form1: TForm1
     AutoImport = False
     PythonEngine = PyEngine
     ManagerKind = pip
-    Managers.Pip.InstallOptions.ExtraIndexUrl = 'https://download.pytorch.org/whl/cu113'
+    Managers.Pip.InstallOptions.ExtraIndexUrl = 'https://download.pytorch.org/whl/cu116'
     AutoInstall = False
     BeforeInstall = PackageConfigureInstall
     Left = 240
@@ -339,7 +351,7 @@ object Form1: TForm1
     AutoImport = False
     PythonEngine = PyEngine
     ManagerKind = pip
-    Managers.Pip.InstallOptions.ExtraIndexUrl = 'https://download.pytorch.org/whl/cu113'
+    Managers.Pip.InstallOptions.ExtraIndexUrl = 'https://download.pytorch.org/whl/cu116'
     AutoInstall = False
     BeforeInstall = PackageConfigureInstall
     Left = 312
@@ -383,6 +395,11 @@ object Form1: TForm1
   object modTrain: TPythonModule
     Engine = PyEngine
     OnInitialization = modTrainInitialization
+    Events = <
+      item
+        Name = 'DelphiLog'
+        OnExecute = modTrainEvents0Execute
+      end>
     ModuleName = 'ptrain'
     Errors = <>
     Left = 168

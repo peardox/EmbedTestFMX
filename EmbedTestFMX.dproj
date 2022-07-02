@@ -271,7 +271,7 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="Unit1.pas">
-            <Form>Form1</Form>
+            <Form>frmMain</Form>
             <FormType>fmx</FormType>
         </DCCReference>
         <DCCReference Include="Modules.pas"/>

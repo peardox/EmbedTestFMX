@@ -1,3 +1,4 @@
+from delphifuncts import *
 import argparse
 import os
 import sys
@@ -229,8 +230,12 @@ def train(args, use_gpu, trial_batch_size):
                             train_left = train_left,
                             train_delta = train_delta,
                             system = get_gpu_memory(have_psutils, use_gpu))
-                            
-                        print(json.dumps(logline))
+
+                        if have_delphi_train:
+                            # print("--> " + json.dumps(logline))
+                            print(ptrain.DelphiLog(json.dumps(logline)))
+                        else:
+                            print(json.dumps(logline))
                         
                     mesg = str(image_count) + ", " \
                         + str(train_elapsed) + ", " \
@@ -325,6 +330,8 @@ def train(args, use_gpu, trial_batch_size):
 
             print("\nDone, trained model saved at", save_model_path)
             print("Batch size =", trial_batch_size, "- Epochs =", epochs)
+            if have_delphi_train:
+                return(json.dumps(logline))
             
         #    torch.onnx.export(model, dummy_input, "alexnet.onnx", verbose=True, input_names=input_names, output_names=output_names)
 
