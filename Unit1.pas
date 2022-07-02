@@ -102,6 +102,7 @@ type
     LastShimPath: String;
     SystemAvailable: Boolean;
     SystemActivated: Boolean;
+    SystemOperational: Boolean;
     StylizeOptions: TStylizeOptions;
     TrainingOptions: TTrainingOptions;
 
@@ -140,6 +141,7 @@ implementation
 
 uses
   Unit2,
+  Unit3,
   VarPyth,
   Math;
 
@@ -155,6 +157,7 @@ begin
   PythonCode := AppRoot + 'testcode.py';
   SystemAvailable := False;
   SystemActivated := False;
+  SystemOperational := False;
   LogMemo.ReadOnly := True;
   LogMemo.Lines.Clear;
   Log('AppRoot : ' + AppRoot);
@@ -179,8 +182,10 @@ begin
 end;
 
 procedure TfrmMain.FormShow(Sender: TObject);
+var
+  mr: TModalResult;
 begin
-    frmProgress.Show;
+    mr := frmProgress.ShowModal;
 end;
 
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -302,8 +307,7 @@ begin
 
   MaskFPUExceptions(True);
   if TPyPackage(Sender).PyModuleName = 'torch' then
-    UpdateProgressForm('Installing ' + TPyPackage(Sender).PyModuleName +
-      '\n\n' +
+    UpdateProgressForm('Installing ' + TPyPackage(Sender).PyModuleName + sLineBreak +
       'This will take quite some time, please be patient')
   else
     UpdateProgressForm('Installing ' + TPyPackage(Sender).PyModuleName);
@@ -367,7 +371,7 @@ begin
         PyEmbedEnv.Setup(PyEmbedEnv.PythonVersion);
         FTask.CheckCanceled();
         TThread.Synchronize(nil, procedure() begin
-          UpdateProgressForm('Activating System');
+          UpdateProgressForm('Activating System' + sLineBreak + sLineBreak + 'One Moment Please...');
           PyEmbedEnv.Activate(PyEmbedEnv.PythonVersion);
         end);
         FTask.CheckCanceled();
@@ -400,7 +404,7 @@ begin
           UpdateStatus('Ready');
           SystemAvailable := True;
           EnableForm(True);
-          frmProgress.Hide;
+          frmProgress.ModalResult := mrClose;
         end);
       end);
     end;
@@ -441,14 +445,16 @@ end;
 
 procedure TfrmMain.btnRunCodeClick(Sender: TObject);
 begin
-  RunCode();
+  if not SystemOperational then
+    RunCode();
 end;
 
 procedure TfrmMain.btnStyleTestClick(Sender: TObject);
 var
   _im: Variant;
 begin
-  RunCode();
+  if not SystemOperational then
+    RunCode();
   _im := MainModule.delphi_style_test();
   ContentImageFileName := _im;
   Log('_im (' + ContentImageFileName + ') is a ' + VarTypeAsText(VarType(_im)));
@@ -460,7 +466,9 @@ var
   _im: Variant;
 begin
   TabControl1.ActiveTab := TabItem3;
-  RunCode();
+  if not SystemOperational then
+    RunCode();
+  frmTraining.ShowModal(nil);
   _im := MainModule.delphi_train_test();
   ContentImageFileName := _im;
   Log('_im (' + ContentImageFileName + ') is a ' + VarTypeAsText(VarType(_im)));
@@ -515,15 +523,18 @@ begin
   except
     on E: EPyIndentationError do
       begin
+        SystemOperational := False;
         Log('Indentation Exception : Line = ' + IntToStr(E.ELineNumber) +
             ', Offset = ' + IntToStr(E.EOffset));
       end;
     on E: EPyImportError do
       begin
+        SystemOperational := False;
         Log('Import Exception : ' + E.EValue + ' : ' + E.EName);
       end;
     on E: Exception do
       begin
+        SystemOperational := False;
         Log('Unhandled Exception');
         Log('Class : ' + E.ClassName);
         Log('Error : ' + E.Message);
@@ -540,6 +551,7 @@ begin
       try
         MaskFPUExceptions(True);
         ExecutePython(CodeMemo.Lines);
+        SystemOperational := True;
       finally
           MaskFPUExceptions(False);
       end;

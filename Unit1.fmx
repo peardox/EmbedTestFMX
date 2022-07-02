@@ -40,7 +40,7 @@ object frmMain: TfrmMain
     Size.Width = 1134.000000000000000000
     Size.Height = 630.000000000000000000
     Size.PlatformDefault = False
-    TabIndex = 0
+    TabIndex = 1
     TabOrder = 2
     TabPosition = PlatformDefault
     Sizes = (
@@ -54,7 +54,7 @@ object frmMain: TfrmMain
       CustomIcon = <
         item
         end>
-      IsSelected = True
+      IsSelected = False
       Size.Width = 46.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
@@ -99,7 +99,7 @@ object frmMain: TfrmMain
       CustomIcon = <
         item
         end>
-      IsSelected = False
+      IsSelected = True
       Size.Width = 46.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
@@ -123,8 +123,8 @@ object frmMain: TfrmMain
           Size.Height = 505.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 0
-          Viewport.Width = 853.000000000000000000
-          Viewport.Height = 501.000000000000000000
+          Viewport.Width = 857.000000000000000000
+          Viewport.Height = 505.000000000000000000
         end
       end
       object Panel4: TPanel
@@ -178,8 +178,8 @@ object frmMain: TfrmMain
             Size.Height = 451.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 0
-            Viewport.Width = 1130.000000000000000000
-            Viewport.Height = 447.000000000000000000
+            Viewport.Width = 1134.000000000000000000
+            Viewport.Height = 451.000000000000000000
           end
         end
         object CodeBtnPanel: TPanel
@@ -246,8 +246,8 @@ object frmMain: TfrmMain
           Size.PlatformDefault = False
           TabOrder = 0
           TabStop = False
-          Viewport.Width = 1130.000000000000000000
-          Viewport.Height = 116.000000000000000000
+          Viewport.Width = 1134.000000000000000000
+          Viewport.Height = 120.000000000000000000
         end
       end
       object Splitter1: TSplitter

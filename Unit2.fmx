@@ -4,8 +4,7 @@ object frmProgress: TfrmProgress
   Caption = 'Initialization Progress'
   ClientHeight = 229
   ClientWidth = 564
-  Position = OwnerFormCenter
-  FormStyle = StayOnTop
+  Position = MainFormCenter
   FormFactor.Width = 320
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]

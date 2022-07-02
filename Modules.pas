@@ -92,14 +92,14 @@ function CreateDefaultTrainingOptions: TTrainingOptions;
 begin
   Result.dataset := '/git/artogo/datasets/train/unsplash/lite/256';
   Result.style_image := 'style-images/dae_mosaic_1-2048.jpg';
-  Result.model_name := 'dae_mosaic_1-2048';
+  Result.model_name := 'dummy';
   Result.model_dir := 'models';
   Result.model_ext := '.pth';
   Result.checkpoint_model_dir := '';
   Result.net := 'vgg16';
   Result.logfile := '';
-  Result.epochs := 2;
-  Result.limit := 0;
+  Result.epochs := 1;
+  Result.limit := 1000;
   Result.batch_size := 12;
   Result.log_interval := 500;
   Result.checkpoint_interval := 1000;
