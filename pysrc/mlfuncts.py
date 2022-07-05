@@ -16,7 +16,6 @@ import utils
 from transformer_net import TransformerNet
 from vgg import *
 import logging
-from cmdfuncts import *
 
 have_psutils = True
 try:
@@ -73,6 +72,9 @@ def check_paths(args):
         
 
 def train(args, use_gpu, trial_batch_size):
+    if have_delphi_io:
+        ioopts = TDelphiInputOutput();
+
     abort_flag = False
     except_flag = False
     e = 0
@@ -192,7 +194,7 @@ def train(args, use_gpu, trial_batch_size):
 
                 agg_content_loss += content_loss.item()
                 agg_style_loss += style_loss.item()
-
+                
                 train_elapsed = time.time() - train_start
                 train_interval = train_elapsed - train_reported
                 if train_interval > reporting_interval:
@@ -216,9 +218,10 @@ def train(args, use_gpu, trial_batch_size):
                             train_delta = 1 - (train_left / last_train)
                             
                     if(args.log_event_api):
+                        logline = None
                         logline = TJsonLog(
                             image_count = image_count,
-                            train_elapsed = train_elapsed,
+                            train_elapsed = round(train_elapsed),
                             train_interval = train_interval,
                             content_loss = round(agg_content_loss / (batch_id + 1)),
                             style_loss = round(agg_style_loss / (batch_id + 1)),
@@ -226,14 +229,19 @@ def train(args, use_gpu, trial_batch_size):
                             reporting_line = reporting_line,
                             train_completion = train_completion,
                             total_images = total_images,
-                            train_eta = train_eta,
-                            train_left = train_left,
-                            train_delta = train_delta,
-                            system = get_gpu_memory(have_psutils, use_gpu))
+                            train_eta = round(train_eta),
+                            train_left = round(train_left),
+                            train_delta = train_delta
+                            )
+                            # system = get_gpu_memory(have_psutils, use_gpu)
 
-                        if have_delphi_train:
+                        if have_delphi_io:
                             # print("--> " + json.dumps(logline))
-                            print(ptrain.DelphiLog(json.dumps(logline)))
+                            ioopts.JsonLog = json.dumps(logline)
+                            # abort_flag = 
+                            pinout.DelphiIO();
+                            abort_flag = ioopts.TrainAbortFlag;
+                            # print("Abort = ", abort_flag);
                         else:
                             print(json.dumps(logline))
                         
@@ -253,7 +261,7 @@ def train(args, use_gpu, trial_batch_size):
                     if (args.logfile != ""):
                         logging.info(mesg)
                     # print(mesg)
-                    
+                                        
                 if (args.checkpoint_model_dir != "") and ((e % args.checkpoint_interval) == 0) and (batch_id == 0) and (e > 0):
                     transformer.eval().cpu()
                     ckpt_model_filename = args.model_name + "-ckpt-" + str(e) + args.model_ext
@@ -264,12 +272,11 @@ def train(args, use_gpu, trial_batch_size):
                     
                 if (args.limit != 0 and count >= ilimit) or abort_flag:
                     if abort_flag:
-                        print("Aborting run")
+                        print("Aborting run !!!")
                     else:
                         pass # print("Limit reached : " + str(ilimit));
                     break;
                     
-                abort_flag = check_abort()
 
     except Exception as e:
         print(e)
@@ -297,9 +304,10 @@ def train(args, use_gpu, trial_batch_size):
                     train_eta = train_elapsed / train_completion
                     train_left = train_eta - train_elapsed
 
+                logline = None
                 logline = TJsonLog(
                     image_count = image_count,
-                    train_elapsed = train_elapsed,
+                    train_elapsed = round(train_elapsed),
                     train_interval = train_interval,
                     content_loss = round(agg_content_loss / (batch_id + 1)),
                     style_loss = round(agg_style_loss / (batch_id + 1)),
@@ -307,8 +315,8 @@ def train(args, use_gpu, trial_batch_size):
                     reporting_line = reporting_line,
                     train_completion = train_completion,
                     total_images = total_images,
-                    train_eta = train_eta,
-                    train_left = train_left,
+                    train_eta = round(train_eta),
+                    train_left = round(train_left),
                     train_delta = 0)
 
                 mesg = str(image_count) + ", " \
@@ -359,11 +367,6 @@ def stylize(args, use_gpu):
                 state_dict = torch.load(os.path.join(args.model_dir, args.model + args.model_ext))
             else:
                 state_dict = torch.load(os.path.join(args.model_dir, args.model))
-            # remove saved deprecated running_* keys in InstanceNorm from the checkpoint
-            if False:
-                for k in list(state_dict.keys()):
-                    if re.search(r'in\d+\.running_(mean|var)$', k):
-                        del state_dict[k]
             style_model.load_state_dict(state_dict)
             style_model.to(device)
             style_model.eval()

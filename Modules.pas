@@ -6,6 +6,12 @@ uses
   System.Classes, System.Variants, System.Zip;
 
 type
+  TInputOutputOptions = record
+    JsonLog: String;
+    StyleAbortFlag: Boolean;
+    TrainAbortFlag: Boolean;
+  end;
+
   TTrainingOptions = record
     dataset: String;
     style_image: String;
@@ -50,7 +56,7 @@ type
 
   TTrainLog = record
     image_count: Integer;
-    train_elapsed: Single;
+    train_elapsed: Integer;
     train_interval: Single;
     content_loss: Integer;
     style_loss: Integer;
@@ -58,18 +64,26 @@ type
     reporting_line: Integer;
     train_completion: Single;
     total_images: Integer;
-    train_eta: Single;
-    train_left: Single;
+    train_eta: Integer;
+    train_left: Integer;
     train_delta: Single;
   end;
 
 
+function CreateDefaultInputOutputOptions: TInputOutputOptions;
 function CreateDefaultStylizeOptions: TStylizeOptions;
 function CreateDefaultTrainingOptions: TTrainingOptions;
 
 implementation
 
 ///// Style Module Definitions /////
+function CreateDefaultInputOutputOptions: TInputOutputOptions;
+begin
+    Result.JsonLog := String.Empty;
+    Result.StyleAbortFlag := False;
+    Result.TrainAbortFlag := False;
+end;
+
 function CreateDefaultStylizeOptions: TStylizeOptions;
 begin
   Result.content_image := 'input-images/fermin-rembg.png';
@@ -91,15 +105,17 @@ end;
 function CreateDefaultTrainingOptions: TTrainingOptions;
 begin
   Result.dataset := '/git/artogo/datasets/train/unsplash/lite/256';
-  Result.style_image := 'style-images/dae_mosaic_1-2048.jpg';
-  Result.model_name := 'dummy';
+//  Result.style_image := 'style-images/dae_mosaic_1-2048.jpg';
+//  Result.model_name := 'dummy';
+  Result.style_image := '/dae/dae/1024/dae_mosaic_1.jpg';
+  Result.model_name := 'dae_mosaic_1-300';
   Result.model_dir := 'models';
   Result.model_ext := '.pth';
   Result.checkpoint_model_dir := '';
   Result.net := 'vgg16';
   Result.logfile := '';
   Result.epochs := 1;
-  Result.limit := 1000;
+  Result.limit := 0;
   Result.batch_size := 12;
   Result.log_interval := 500;
   Result.checkpoint_interval := 1000;
@@ -108,7 +124,7 @@ begin
   Result.content_weight := 1e5;
   Result.style_weight := 1e10;
   Result.lr := 1e-3;
-  Result.style_scale := 1.0;
+  Result.style_scale := 1/3;
   Result.force_size := True;
   Result.ignore_gpu := False;
   Result.cuda := True;

@@ -123,8 +123,8 @@ object frmMain: TfrmMain
           Size.Height = 505.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 0
-          Viewport.Width = 857.000000000000000000
-          Viewport.Height = 505.000000000000000000
+          Viewport.Width = 853.000000000000000000
+          Viewport.Height = 501.000000000000000000
         end
       end
       object Panel4: TPanel
@@ -178,8 +178,8 @@ object frmMain: TfrmMain
             Size.Height = 451.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 0
-            Viewport.Width = 1134.000000000000000000
-            Viewport.Height = 451.000000000000000000
+            Viewport.Width = 1130.000000000000000000
+            Viewport.Height = 447.000000000000000000
           end
         end
         object CodeBtnPanel: TPanel
@@ -246,8 +246,8 @@ object frmMain: TfrmMain
           Size.PlatformDefault = False
           TabOrder = 0
           TabStop = False
-          Viewport.Width = 1134.000000000000000000
-          Viewport.Height = 120.000000000000000000
+          Viewport.Width = 1130.000000000000000000
+          Viewport.Height = 116.000000000000000000
         end
       end
       object Splitter1: TSplitter
@@ -395,14 +395,22 @@ object frmMain: TfrmMain
   object modTrain: TPythonModule
     Engine = PyEngine
     OnInitialization = modTrainInitialization
-    Events = <
-      item
-        Name = 'DelphiLog'
-        OnExecute = modTrainEvents0Execute
-      end>
     ModuleName = 'ptrain'
     Errors = <>
     Left = 168
     Top = 144
+  end
+  object modInputOutput: TPythonModule
+    Engine = PyEngine
+    OnInitialization = modInputOutputInitialization
+    Events = <
+      item
+        Name = 'DelphiIO'
+        OnExecute = modInputOutputEvents0Execute
+      end>
+    ModuleName = 'pinout'
+    Errors = <>
+    Left = 232
+    Top = 146
   end
 end

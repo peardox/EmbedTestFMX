@@ -1,5 +1,30 @@
 have_delphi_train = False
 have_delphi_style = False
+have_delphi_io = False
+
+try:
+    import pinout
+
+    have_delphi_io = True
+
+    class TDelphiInputOutput:
+        def __getattr__(Self, Key):
+            return pinout.GetProperty(Key)
+
+        def __setattr__(Self, Key, Value):
+            pinout.SetProperty(Key, Value)
+
+        def __repr__(Self):
+            tmp = ""
+            for i in pinout.GetPropertyList():
+                if tmp:
+                    tmp = tmp + ", "
+                tmp = tmp + i + " = " + str(getattr(Self,i))
+            return tmp
+
+except Exception as e:
+    print("Missing pinout")
+    
 
 try:
     import pstylize

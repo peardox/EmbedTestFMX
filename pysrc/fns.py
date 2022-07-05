@@ -5,8 +5,6 @@ import time
 import logging
 import torch
 from mlfuncts import *
-from cmdfuncts import *
-
 
 def check_gpu():
     try:
@@ -183,3 +181,8 @@ if __name__ == "__main__":
 # python pysrc/fns.py eval --content-image input-images/haywain-wall.jpg --model-dir models --model operagx-256-2 --output-image output-images/logocomp.png
 # python pysrc/fns.py train --epochs 4 --batch-size 20 --dataset /train/unsplash/256 --style-image style-images/stray.jpg --model-dir models --model-name stray-256-4 --style-weight 1e10 --net vgg19 --logfile logs/stray-256-4.csv --log-event-api True
 # python pysrc/fns.py train --epochs 16 --batch-size 20 --dataset /train/unsplash/256 --style-image style-images/stray.jpg --model-dir models --model-name stray-256-16 --style-weight 1e10 --net vgg19 --logfile logs/stray-256-16.csv --checkpoint-model-dir checkpoints --checkpoint-interval 2 --log-event-api True
+# python pysrc/fns.py eval --model-dir models --model wall --content-image input-images/haywain.jpg --output-image output-images/haywain-wall.jpg
+
+# train --epochs 1 --batch-size 1 --dataset /git/artogo/datasets/train/unsplash/lite/256 --style-image /dae/dae/256/dae_mosaic_1.jpg --model-dir models --model-name test-time --style-weight 1e10 --net vgg16 --log-event-api True
+
+# eval --model-dir models --model dae_mosaic_1-256 --content-image input-images/haywain.jpg --output-image output-images/aaa-haywain-mosaic-256.jpg

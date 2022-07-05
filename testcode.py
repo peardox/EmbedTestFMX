@@ -6,7 +6,6 @@ import logging
 import torch
 import json
 from mlfuncts import *
-from cmdfuncts import *
 
 have_psutils = True
 try:

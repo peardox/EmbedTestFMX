@@ -13,7 +13,9 @@ type
     Text1: TText;
     Text2: TText;
     btnAbort: TButton;
+    btnSample: TButton;
     procedure btnAbortClick(Sender: TObject);
+    procedure btnSampleClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -26,11 +28,16 @@ var
 implementation
 
 {$R *.fmx}
-Uses unit1;
+Uses unit1, Modules;
 
 procedure TfrmTraining.btnAbortClick(Sender: TObject);
 begin
-  ModalResult := mrAbort;
+  frmMain.AbortTraining;
+end;
+
+procedure TfrmTraining.btnSampleClick(Sender: TObject);
+begin
+  frmMain.AbortTraining;
 end;
 
 end.

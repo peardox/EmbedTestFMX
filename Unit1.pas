@@ -4,13 +4,17 @@ interface
 
 uses
   System.SysUtils, System.IOUtils, System.Threading, System.Types, System.UITypes,
-  System.Classes, System.Variants, System.Zip,
+  System.Classes, System.Variants, System.Zip, System.JSON.Serializers,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.TabControl,
   FMX.Controls.Presentation, FMX.StdCtrls, FMX.Memo.Types, FMX.ScrollBox,
   FMX.Memo, PyEnvironment.Embeddable.Res, PyEnvironment.Embeddable.Res.Python39,
   PythonEngine, PyEnvironment, PyEnvironment.Embeddable, TorchVision, PyTorch,
   NumPy, PyCommon, PyModule, PyPackage, SciPy, FMX.PythonGUIInputOutput,
-  FMX.Menus, Skia.FMX, FMX.Objects,
+  FMX.Menus,
+  {$ifndef MACOS64}
+  Skia.FMX,
+  {$endif}
+  FMX.Objects,
   Modules, PSUtil;
 
 type
@@ -60,6 +64,7 @@ type
     btnTrainTest: TButton;
     modTrain: TPythonModule;
     TrainMemo: TMemo;
+    modInputOutput: TPythonModule;
     procedure PyIOSendUniData(Sender: TObject; const Data: string);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -87,11 +92,11 @@ type
       const APythonVersion: string);
     procedure modTrainInitialization(Sender: TObject);
     procedure btnTrainTestClick(Sender: TObject);
-    procedure modTrainEvents0Execute(Sender: TObject; PSelf, Args: PPyObject;
-      var Result: PPyObject);
+    procedure modInputOutputEvents0Execute(Sender: TObject; PSelf,
+      Args: PPyObject; var Result: PPyObject);
+    procedure modInputOutputInitialization(Sender: TObject);
   private
     { Private declarations }
-    AppRoot: String;
     CodeRoot: String;
     PythonCode: String;
     ImageRoot: String;
@@ -103,6 +108,7 @@ type
     SystemAvailable: Boolean;
     SystemActivated: Boolean;
     SystemOperational: Boolean;
+    InputOutputOptions: TInputOutputOptions;
     StylizeOptions: TStylizeOptions;
     TrainingOptions: TTrainingOptions;
 
@@ -118,6 +124,10 @@ type
     procedure LoadImage;
     procedure UpdateProgressForm(const AStatus: String);
 
+    function GetInputOutputProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+    function SetInputOutputProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+    function GetInputOutputPropertyList(pSelf, Args : PPyObject) : PPyObject; cdecl;
+
     function GetStyleProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
     function SetStyleProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
     function GetStylePropertyList(pSelf, Args : PPyObject) : PPyObject; cdecl;
@@ -125,9 +135,12 @@ type
     function GetTrainProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
     function SetTrainProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
     function GetTrainPropertyList(pSelf, Args : PPyObject) : PPyObject; cdecl;
+
   public
     { Public declarations }
+    AppRoot: String;
     procedure Log(AMsg: String);
+    procedure AbortTraining;
   end;
 
 var
@@ -147,7 +160,12 @@ uses
 
 procedure TfrmMain.FormCreate(Sender: TObject);
 begin
+
+  {$ifndef MACOS64}
   AppRoot := IncludeTrailingPathDelimiter(System.IOUtils.TPath.GetLibraryPath);
+  {$else}
+  AppRoot := IncludeTrailingPathDelimiter(System.IOUtils.TPath.GetLibraryPath) + 'EmbedTest/';
+  {$endif}
   CodeRoot := AppRoot;
   ImageRoot := AppRoot;
   ContentImageFileName := String.Empty;
@@ -165,6 +183,7 @@ begin
 
   Log('Initializing');
 
+  InputOutputOptions := CreateDefaultInputOutputOptions;
   StylizeOptions := CreateDefaultStylizeOptions;
   TrainingOptions := CreateDefaultTrainingOptions;
 
@@ -461,20 +480,6 @@ begin
   ContentImage.Bitmap.LoadFromFile(ContentImageFileName);
 end;
 
-procedure TfrmMain.btnTrainTestClick(Sender: TObject);
-var
-  _im: Variant;
-begin
-  TabControl1.ActiveTab := TabItem3;
-  if not SystemOperational then
-    RunCode();
-  frmTraining.ShowModal(nil);
-  _im := MainModule.delphi_train_test();
-  ContentImageFileName := _im;
-  Log('_im (' + ContentImageFileName + ') is a ' + VarTypeAsText(VarType(_im)));
-//  StyleImage.Bitmap.LoadFromFile(ContentImageFileName);
-end;
-
 procedure TfrmMain.btnReLoadClick(Sender: TObject);
 begin
   ReLoadCode;
@@ -606,6 +611,148 @@ end;
 procedure TfrmMain.PyEngineSysPathInit(Sender: TObject; PathList: PPyObject);
 begin
   Log('PyEngineSysPathInit'); // SBDbg
+end;
+
+///// InputOutput Module Definitions /////
+
+procedure TfrmMain.btnTrainTestClick(Sender: TObject);
+var
+  _im: Variant;
+begin
+  InputOutputOptions.TrainAbortFlag := False;
+  TabControl1.ActiveTab := TabItem3;
+  if not SystemOperational then
+    RunCode();
+  frmTraining.Show;
+  TrainMemo.BeginUpdate;
+  TrainMemo.Lines.Add('Running Training Code');
+  TrainMemo.EndUpdate;
+  _im := MainModule.delphi_train_test();
+  ContentImageFileName := _im;
+  Log('_im (' + ContentImageFileName + ') is a ' + VarTypeAsText(VarType(_im)));
+  frmTraining.Hide;
+//  StyleImage.Bitmap.LoadFromFile(ContentImageFileName);
+end;
+
+procedure TfrmMain.AbortTraining;
+begin
+  Log('TrainAbortFlag set!');
+  InputOutputOptions.TrainAbortFlag := True;
+end;
+
+procedure TfrmMain.modInputOutputEvents0Execute(Sender: TObject; PSelf,
+  Args: PPyObject; var Result: PPyObject);
+  procedure HandleLogLine(const ALogLine: String);
+  var
+    lSerializer: TJsonSerializer;
+    log: TTrainLog;
+  begin
+    lSerializer := TJsonSerializer.Create;
+    try
+      try
+        log := lSerializer.Deserialize<TTrainLog>(ALogLine);
+        frmTraining.Text1.Text := IntToStr(log.train_left);
+        frmTraining.Text1.RePaint;
+        frmTraining.Text2.Text := IntToStr(log.image_count);
+        frmTraining.Text2.RePaint;
+        Application.ProcessMessages();
+      except
+       on E : Exception do
+       begin
+         TrainMemo.Lines.Add('Exception class name = '+E.ClassName);
+         TrainMemo.Lines.Add('Exception message = '+E.Message);
+         TrainMemo.Lines.Add(ALogLine);
+       end;
+      end;
+    finally
+      FreeAndNil(lSerializer);
+    end;
+  end;
+var
+  AMsg: String;
+begin
+  with GetPythonEngine do
+  begin
+    HandleLogLine(InputOutputOptions.JsonLog);
+    Result := ReturnNone;
+  end;
+end;
+
+procedure TfrmMain.modInputOutputInitialization(Sender: TObject);
+begin
+  with Sender as TPythonModule do
+    begin
+      AddDelphiMethod( 'GetProperty', GetInputOutputProperty, 'GetProperty(PropName) -> PropValue' );
+      AddDelphiMethod( 'SetProperty', SetInputOutputProperty, 'SetProperty(PropName, PropValue) -> None' );
+      AddDelphiMethod( 'GetPropertyList', GetInputOutputPropertyList, 'GetPropertyList() -> List of property names' );
+    end;
+end;
+
+function TfrmMain.GetInputOutputProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+var
+  key : PAnsiChar;
+begin
+  with GetPythonEngine do
+    if PyArg_ParseTuple( args, 's:GetProperty',@key ) <> 0 then
+      begin
+        if key = 'JsonLog' then
+          Result := VariantAsPyObject(InputOutputOptions.JsonLog)
+        else if key = 'StyleAbortFlag' then
+          Result := VariantAsPyObject(InputOutputOptions.StyleAbortFlag)
+        else if key = 'TrainAbortFlag' then
+          Result := VariantAsPyObject(InputOutputOptions.TrainAbortFlag)
+        else
+          begin
+            PyErr_SetString (PyExc_AttributeError^, PAnsiChar(Format('Unknown property "%s"', [key])));
+            Result := nil;
+          end;
+      end
+    else
+      Result := nil;
+end;
+
+function TfrmMain.SetInputOutputProperty(pSelf, Args : PPyObject) : PPyObject; cdecl;
+var
+  key : PAnsiChar;
+  value : PPyObject;
+begin
+  with GetPythonEngine do
+    if PyArg_ParseTuple( args, 'sO:SetProperty',@key, @value ) <> 0 then
+      begin
+        if key = 'JsonLog' then
+          begin
+            InputOutputOptions.JsonLog := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'StyleAbortFlag' then
+          begin
+            InputOutputOptions.StyleAbortFlag := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'TrainAbortFlag' then
+          begin
+            InputOutputOptions.TrainAbortFlag := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else
+          begin
+            PyErr_SetString (PyExc_AttributeError^, PAnsiChar(Format('Unknown property "%s"', [key])));
+            Result := nil;
+          end;
+      end
+    else
+      Result := nil;
+end;
+
+function TfrmMain.GetInputOutputPropertyList(pSelf, Args : PPyObject) : PPyObject; cdecl;
+begin
+  with GetPythonEngine do
+    begin
+      Result := PyList_New(3);
+      PyList_SetItem(Result, 0, PyUnicodeFromString('JsonLog'));
+      PyList_SetItem(Result, 1, PyUnicodeFromString('StyleAbortFlag'));
+      PyList_SetItem(Result, 2, PyUnicodeFromString('TrainAbortFlag'));
+    end;
 end;
 
 ///// Style Module Definitions /////
@@ -760,51 +907,6 @@ begin
 end;
 
 ///// Training Module Definitions /////
-
-procedure TfrmMain.modTrainEvents0Execute(Sender: TObject; PSelf, Args: PPyObject;
-  var Result: PPyObject);
-var
-  AMsg: String;
-  log: TTrainLog;
-begin
-  with GetPythonEngine do
-  begin
-    // Check if the transmitted object is a dictionary
-    {
-    log.image_count := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
-    log.train_elapsed := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
-    log.train_interval := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
-    log.content_loss := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
-    log.style_loss := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
-    log.total_loss := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
-    log.reporting_line := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
-    log.train_completion := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
-    log.total_images := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
-    log.train_eta := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
-    log.train_left := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
-    log.train_delta := PyObjectAsVariant( PyDict_GetItemString(Args, 'Title') );
-
-    }
-//    AMsg := GetTypeAsString(Args);
-    AMsg := PyObjectAsString(Args);
-    if TThread.CurrentThread.ThreadID <> MainThreadID then
-    begin
-      TThread.Synchronize(nil, procedure() begin
-       TrainMemo.Lines.Add(AMsg);
-       TrainMemo.GoToTextEnd;
-       TrainMemo.GoToLineBegin;
-       TrainMemo.Repaint;
-      end);
-    end
-    else
-    begin
-      TrainMemo.Lines.Add(AMsg);
-      TrainMemo.GoToTextEnd;
-      TrainMemo.GoToLineBegin;
-    end;
-    Result := PyUnicodeFromString('===> Logline Recorded');
-  end;
-end;
 
 procedure TfrmMain.modTrainInitialization(Sender: TObject);
 begin

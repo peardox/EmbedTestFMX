@@ -5,6 +5,7 @@ object frmTraining: TfrmTraining
   ClientHeight = 480
   ClientWidth = 447
   Position = MainFormCenter
+  FormStyle = StayOnTop
   FormFactor.Width = 320
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
@@ -24,10 +25,17 @@ object frmTraining: TfrmTraining
     Size.PlatformDefault = False
   end
   object btnAbort: TButton
-    Position.X = 184.000000000000000000
+    Position.X = 64.000000000000000000
     Position.Y = 432.000000000000000000
     TabOrder = 2
     Text = 'Abort'
     OnClick = btnAbortClick
+  end
+  object btnSample: TButton
+    Position.X = 328.000000000000000000
+    Position.Y = 432.000000000000000000
+    TabOrder = 3
+    Text = 'Sample'
+    OnClick = btnSampleClick
   end
 end
