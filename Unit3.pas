@@ -19,12 +19,14 @@ type
     TabItem2: TTabItem;
     TabItem3: TTabItem;
     Text2: TText;
+    imgSample: TImage;
     procedure btnAbortClick(Sender: TObject);
     procedure btnSampleClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
     { Private declarations }
   public
+    procedure UpdateSample(const AFilename: String);
     procedure UpdateProgress(const log: TTrainLog);
     { Public declarations }
   end;
@@ -53,7 +55,20 @@ begin
   else
     Text2.Text := 'ETA' + sLineBreak + FormatDateTime('hh:mm', eta);
   Text1.RePaint;
+  Application.ProcessMessages;
 end;
+
+procedure TfrmTraining.UpdateSample(const AFilename: String);
+begin
+  if FileExists(AFilename) then
+    begin
+      TabControl1.ActiveTab := TabItem2;
+      imgSample.Bitmap.LoadFromFile(AFilename);
+    end;
+  Text1.RePaint;
+  Application.ProcessMessages;
+end;
+
 procedure TfrmTraining.btnAbortClick(Sender: TObject);
 begin
   btnAbort.Enabled := False;

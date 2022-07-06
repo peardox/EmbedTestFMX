@@ -123,8 +123,8 @@ object frmMain: TfrmMain
           Size.Height = 505.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 0
-          Viewport.Width = 857.000000000000000000
-          Viewport.Height = 505.000000000000000000
+          Viewport.Width = 853.000000000000000000
+          Viewport.Height = 501.000000000000000000
         end
       end
       object Panel4: TPanel
@@ -178,8 +178,8 @@ object frmMain: TfrmMain
             Size.Height = 91.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 0
-            Viewport.Width = 1134.000000000000000000
-            Viewport.Height = 91.000000000000000000
+            Viewport.Width = 1130.000000000000000000
+            Viewport.Height = 87.000000000000000000
           end
         end
         object CodeBtnPanel: TPanel
@@ -246,8 +246,8 @@ object frmMain: TfrmMain
           Size.PlatformDefault = False
           TabOrder = 0
           TabStop = False
-          Viewport.Width = 1134.000000000000000000
-          Viewport.Height = 480.000000000000000000
+          Viewport.Width = 1130.000000000000000000
+          Viewport.Height = 476.000000000000000000
         end
       end
       object Splitter1: TSplitter
@@ -410,10 +410,14 @@ object frmMain: TfrmMain
       item
         Name = 'DelphiIO'
         OnExecute = modInputOutputEvents0Execute
+      end
+      item
+        Name = 'SampleToDelphi'
+        OnExecute = modInputOutputEvents1Execute
       end>
     ModuleName = 'pinout'
     Errors = <>
-    Left = 232
+    Left = 240
     Top = 146
   end
 end

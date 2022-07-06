@@ -11,6 +11,7 @@ type
     StyleAbortFlag: Boolean;
     TrainAbortFlag: Boolean;
     TrainSampleFlag: Boolean;
+    SampleFilename: String;
   end;
 
   TTrainingOptions = record
@@ -80,7 +81,7 @@ begin
     Result.StyleAbortFlag := False;
     Result.TrainAbortFlag := False;
     Result.TrainSampleFlag := False;
-
+    Result.SampleFilename:= String.Empty;
 end;
 
 function CreateDefaultStylizeOptions: TStylizeOptions;
@@ -111,7 +112,7 @@ begin
   Result.net := 'vgg16';
   Result.logfile := '';
   Result.epochs := 1;
-  Result.limit := 0;
+  Result.limit := 1000;
   Result.batch_size := 6;
   Result.image_size := 256;
   Result.seed := 42;

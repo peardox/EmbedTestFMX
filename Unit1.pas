@@ -101,6 +101,8 @@ type
       const APythonVersion: string);
     procedure PyEmbedEnvBeforeSetup(Sender: TObject;
       const APythonVersion: string);
+    procedure modInputOutputEvents1Execute(Sender: TObject; PSelf,
+      Args: PPyObject; var Result: PPyObject);
   private
     { Private declarations }
     CodeRoot: String;
@@ -277,18 +279,24 @@ end;
 procedure TfrmMain.Log(AMsg: String);
 begin
   if TThread.CurrentThread.ThreadID <> MainThreadID then
-  begin
-    TThread.Synchronize(nil, procedure() begin
-     LogMemo.Lines.Add(AMsg);
-     LogMemo.GoToTextEnd;
-     LogMemo.Repaint;
-    end);
-  end
+    begin
+      TThread.Synchronize(nil, procedure() begin
+      if AMsg <> String.Empty then
+        begin
+          LogMemo.Lines.Add(AMsg);
+          LogMemo.GoToTextEnd;
+        end;
+       LogMemo.Repaint;
+      end);
+    end
   else
-  begin
-    LogMemo.Lines.Add(AMsg);
-    LogMemo.GoToTextEnd;
-  end;
+    begin
+      if AMsg <> String.Empty then
+        begin
+          LogMemo.Lines.Add(AMsg);
+          LogMemo.GoToTextEnd;
+        end;
+    end;
 end;
 
 procedure TfrmMain.MenuItem3Click(Sender: TObject);
@@ -695,6 +703,19 @@ begin
   InputOutputOptions.TrainSampleFlag := True;
 end;
 
+procedure TfrmMain.modInputOutputEvents1Execute(Sender: TObject; PSelf,
+  Args: PPyObject; var Result: PPyObject);
+var
+  AMsg: String;
+begin
+  with GetPythonEngine do
+  begin
+    Log('SampleFilename = ' + InputOutputOptions.SampleFilename);
+    frmTraining.UpdateSample(InputOutputOptions.SampleFilename);
+    Result := ReturnNone;
+  end;
+end;
+
 procedure TfrmMain.modInputOutputEvents0Execute(Sender: TObject; PSelf,
   Args: PPyObject; var Result: PPyObject);
   procedure HandleLogLine(const ALogLine: String);
@@ -706,10 +727,7 @@ procedure TfrmMain.modInputOutputEvents0Execute(Sender: TObject; PSelf,
     try
       try
         log := lSerializer.Deserialize<TTrainLog>(ALogLine);
-//        frmTraining.Text1.Text := IntToStr(log.train_left);
-//        frmTraining.Text1.RePaint;
         frmTraining.UpdateProgress(log);
-        // frmTraining.Foc
         Application.ProcessMessages;
       except
        on E : Exception do
@@ -758,6 +776,8 @@ begin
           Result := VariantAsPyObject(InputOutputOptions.TrainAbortFlag)
         else if key = 'TrainSampleFlag' then
           Result := VariantAsPyObject(InputOutputOptions.TrainSampleFlag)
+        else if key = 'SampleFilename' then
+          Result := VariantAsPyObject(InputOutputOptions.SampleFilename)
         else
           begin
             PyErr_SetString (PyExc_AttributeError^, PAnsiChar(Format('Unknown property "%s"', [key])));
@@ -794,6 +814,11 @@ begin
         else if key = 'TrainSampleFlag' then
           begin
             InputOutputOptions.TrainSampleFlag := PyObjectAsVariant( value );
+            Result := ReturnNone;
+          end
+        else if key = 'SampleFilename' then
+          begin
+            InputOutputOptions.SampleFilename := PyObjectAsVariant( value );
             Result := ReturnNone;
           end
         else

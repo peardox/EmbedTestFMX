@@ -132,7 +132,7 @@ def do_stylize(opts = None):
     
     if opts == None:
         opts = TStylize( content_image = "input-images\\haywain.jpg",
-            content_image_raw = None,
+            content_image_raw = "",
             output_image = "output-images\\test-dae-sketch1-512.jpg",
             model = "test-dae-sketch1-512",
             # model = "mosaic-vgg16-1010-512",
@@ -157,7 +157,7 @@ def do_test(opts = None):
     
     if opts == None:
         opts = TStylize( content_image = "input-images\\haywain.jpg",
-            content_image_raw = None,
+            content_image_raw = "",
             output_image = "output-images\\test-dae-sketch1-512.jpg",
             model = "test-dae-sketch1-512",
             # model = "mosaic-vgg16-1010-512",

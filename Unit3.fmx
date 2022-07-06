@@ -54,12 +54,12 @@ object frmTraining: TfrmTraining
         item
         end>
       IsSelected = True
-      Size.Width = 69.000000000000000000
+      Size.Width = 40.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
       StyleLookup = ''
       TabOrder = 0
-      Text = 'TabItem1'
+      Text = 'ETA'
       ExplicitSize.cx = 69.000000000000000000
       ExplicitSize.cy = 26.000000000000000000
       object Text2: TText
@@ -75,26 +75,35 @@ object frmTraining: TfrmTraining
         item
         end>
       IsSelected = False
-      Size.Width = 69.000000000000000000
+      Size.Width = 60.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
       StyleLookup = ''
       TabOrder = 0
-      Text = 'TabItem2'
+      Text = 'Sample'
       ExplicitSize.cx = 69.000000000000000000
       ExplicitSize.cy = 26.000000000000000000
+      object imgSample: TImage
+        MultiResBitmap = <
+          item
+          end>
+        Align = Client
+        Size.Width = 353.000000000000000000
+        Size.Height = 263.000000000000000000
+        Size.PlatformDefault = False
+      end
     end
     object TabItem3: TTabItem
       CustomIcon = <
         item
         end>
       IsSelected = False
-      Size.Width = 69.000000000000000000
+      Size.Width = 43.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
       StyleLookup = ''
       TabOrder = 0
-      Text = 'TabItem3'
+      Text = 'Loss'
       ExplicitSize.cx = 69.000000000000000000
       ExplicitSize.cy = 26.000000000000000000
     end

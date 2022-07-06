@@ -274,11 +274,26 @@ def train(args, use_gpu, trial_batch_size):
                 if train_sample_flag:
                     train_sample_flag = False
                     transformer.eval().cpu()
-                    ckpt_model_filename = args.model_name + "-ckpt-" + str(e) + args.model_ext
+                    ckpt_model_filename = args.model_name + "-ckpt-" + str(e)
                     ckpt_model_path = os.path.join(args.checkpoint_model_dir, ckpt_model_filename)
-                    torch.save(transformer.state_dict(), ckpt_model_path)
+                    torch.save(transformer.state_dict(), ckpt_model_path + args.model_ext)
+                    print("Saved", ckpt_model_path + args.model_ext)
+                    sample = stylize(TStylize( content_image = "input-images/haywain.jpg",
+                        content_image_raw = "",
+                        output_image = args.checkpoint_model_dir + "/" + ckpt_model_filename + ".jpg",
+                        model = ckpt_model_filename,
+                        model_dir = args.checkpoint_model_dir,
+                        model_ext = ".pth",
+                        logfile = "",
+                        content_scale = 1,
+                        ignore_gpu = False,
+                        export_onnx = False,
+                        add_model_ext = True,
+                        log_event_api = False), False)
+                    print("Sample =", sample);
+                    ioopts.SampleFilename = sample;
+                    pinout.SampleToDelphi()
                     transformer.to(device).train()
-                    print("Saved", ckpt_model_path)
                     
                 if (args.limit != 0 and count >= ilimit) or abort_flag:
                     if abort_flag:
@@ -367,7 +382,7 @@ def train(args, use_gpu, trial_batch_size):
 def stylize(args, use_gpu):
     device = torch.device("cuda" if use_gpu else "cpu")
     
-    if args.content_image_raw == '':
+    if args.content_image_raw == "":
         content_image = utils.load_image(args.content_image, args.content_scale)
     else:
         content_image = content_image_raw
@@ -426,6 +441,11 @@ def stylize_onnx(content_image, args):
     return torch.from_numpy(img_out_y)
 
 class TJsonLog(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__dict__ = self
+
+class TStylize(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__dict__ = self
