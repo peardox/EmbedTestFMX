@@ -123,8 +123,8 @@ object frmMain: TfrmMain
           Size.Height = 505.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 0
-          Viewport.Width = 853.000000000000000000
-          Viewport.Height = 501.000000000000000000
+          Viewport.Width = 857.000000000000000000
+          Viewport.Height = 505.000000000000000000
         end
       end
       object Panel4: TPanel
@@ -159,14 +159,14 @@ object frmMain: TfrmMain
       object pnlCodeView: TPanel
         Align = Client
         Size.Width = 1134.000000000000000000
-        Size.Height = 481.000000000000000000
+        Size.Height = 121.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 0
         TabStop = False
         object pnlCodeEdit: TPanel
           Align = Client
           Size.Width = 1134.000000000000000000
-          Size.Height = 451.000000000000000000
+          Size.Height = 91.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 1
           TabStop = False
@@ -175,11 +175,11 @@ object frmMain: TfrmMain
             DataDetectorTypes = []
             Align = Client
             Size.Width = 1134.000000000000000000
-            Size.Height = 451.000000000000000000
+            Size.Height = 91.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 0
-            Viewport.Width = 1130.000000000000000000
-            Viewport.Height = 447.000000000000000000
+            Viewport.Width = 1134.000000000000000000
+            Viewport.Height = 91.000000000000000000
           end
         end
         object CodeBtnPanel: TPanel
@@ -231,9 +231,9 @@ object frmMain: TfrmMain
       end
       object pnlLogView: TPanel
         Align = Bottom
-        Position.Y = 484.000000000000000000
+        Position.Y = 124.000000000000000000
         Size.Width = 1134.000000000000000000
-        Size.Height = 120.000000000000000000
+        Size.Height = 480.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 1
         object LogMemo: TMemo
@@ -242,19 +242,19 @@ object frmMain: TfrmMain
           ReadOnly = True
           Align = Client
           Size.Width = 1134.000000000000000000
-          Size.Height = 120.000000000000000000
+          Size.Height = 480.000000000000000000
           Size.PlatformDefault = False
           TabOrder = 0
           TabStop = False
-          Viewport.Width = 1130.000000000000000000
-          Viewport.Height = 116.000000000000000000
+          Viewport.Width = 1134.000000000000000000
+          Viewport.Height = 480.000000000000000000
         end
       end
       object Splitter1: TSplitter
         Align = Bottom
         Cursor = crVSplit
         MinSize = 20.000000000000000000
-        Position.Y = 481.000000000000000000
+        Position.Y = 121.000000000000000000
         Size.Width = 1134.000000000000000000
         Size.Height = 3.000000000000000000
         Size.PlatformDefault = False
@@ -358,6 +358,9 @@ object frmMain: TfrmMain
     Top = 272
   end
   object PyEmbedEnv: TPyEmbeddedResEnvironment39
+    BeforeSetup = PyEmbedEnvBeforeSetup
+    AfterSetup = PyEmbedEnvAfterSetup
+    BeforeActivate = PyEmbedEnvBeforeActivate
     AfterActivate = PyEmbedEnvAfterActivate
     BeforeDeactivate = PyEmbedEnvBeforeDeactivate
     AfterDeactivate = PyEmbedEnvAfterDeactivate

@@ -77,6 +77,7 @@ def train(args, use_gpu, trial_batch_size):
 
     abort_flag = False
     except_flag = False
+    train_sample_flag = False
     e = 0
     agg_content_loss = 0
     agg_style_loss = 0.
@@ -218,51 +219,60 @@ def train(args, use_gpu, trial_batch_size):
                             train_delta = 1 - (train_left / last_train)
                             
                     if(args.log_event_api):
-                        logline = None
-                        logline = TJsonLog(
-                            image_count = image_count,
-                            train_elapsed = round(train_elapsed),
-                            train_interval = train_interval,
-                            content_loss = round(agg_content_loss / (batch_id + 1)),
-                            style_loss = round(agg_style_loss / (batch_id + 1)),
-                            total_loss = round((agg_content_loss + agg_style_loss) / (batch_id + 1)),
-                            reporting_line = reporting_line,
-                            train_completion = train_completion,
-                            total_images = total_images,
-                            train_eta = round(train_eta),
-                            train_left = round(train_left),
-                            train_delta = train_delta
-                            )
-                            # system = get_gpu_memory(have_psutils, use_gpu)
+                        # system = get_gpu_memory(have_psutils, use_gpu)
 
                         if have_delphi_io:
-                            # print("--> " + json.dumps(logline))
-                            ioopts.JsonLog = json.dumps(logline)
-                            # abort_flag = 
+                            ioopts.JsonLog = json.dumps(TJsonLog(
+                                image_count = image_count,
+                                train_elapsed = round(train_elapsed),
+                                train_interval = train_interval,
+                                content_loss = round(agg_content_loss / (batch_id + 1)),
+                                style_loss = round(agg_style_loss / (batch_id + 1)),
+                                total_loss = round((agg_content_loss + agg_style_loss) / (batch_id + 1)),
+                                reporting_line = reporting_line,
+                                train_completion = train_completion,
+                                total_images = total_images,
+                                train_eta = round(train_eta),
+                                train_left = round(train_left),
+                                train_delta = train_delta
+                                ))
                             pinout.DelphiIO();
                             abort_flag = ioopts.TrainAbortFlag;
-                            # print("Abort = ", abort_flag);
+                            train_sample_flag = ioopts.TrainSampleFlag;
+                            ioopts.TrainSampleFlag = False;
                         else:
-                            print(json.dumps(logline))
+                            print(json.dumps(TJsonLog(
+                                image_count = image_count,
+                                train_elapsed = round(train_elapsed),
+                                train_interval = train_interval,
+                                content_loss = round(agg_content_loss / (batch_id + 1)),
+                                style_loss = round(agg_style_loss / (batch_id + 1)),
+                                total_loss = round((agg_content_loss + agg_style_loss) / (batch_id + 1)),
+                                reporting_line = reporting_line,
+                                train_completion = train_completion,
+                                total_images = total_images,
+                                train_eta = round(train_eta),
+                                train_left = round(train_left),
+                                train_delta = train_delta
+                                )))
                         
-                    mesg = str(image_count) + ", " \
-                        + str(train_elapsed) + ", " \
-                        + str(train_interval) + ", " \
-                        + str(round(agg_content_loss / (batch_id + 1))) + ", " \
-                        + str(round(agg_style_loss / (batch_id + 1))) + ", " \
-                        + str(round((agg_content_loss + agg_style_loss) / (batch_id + 1))) \
-                        + ", " + str(reporting_line) \
-                        + ", " + str(train_completion) \
-                        + ", " + str(total_images) \
-                        + ", " + str(train_eta) \
-                        + ", " + str(train_left) \
-                        + ", " + str(train_delta)
-
                     if (args.logfile != ""):
+                        mesg = str(image_count) + ", " \
+                            + str(train_elapsed) + ", " \
+                            + str(train_interval) + ", " \
+                            + str(round(agg_content_loss / (batch_id + 1))) + ", " \
+                            + str(round(agg_style_loss / (batch_id + 1))) + ", " \
+                            + str(round((agg_content_loss + agg_style_loss) / (batch_id + 1))) \
+                            + ", " + str(reporting_line) \
+                            + ", " + str(train_completion) \
+                            + ", " + str(total_images) \
+                            + ", " + str(train_eta) \
+                            + ", " + str(train_left) \
+                            + ", " + str(train_delta)
                         logging.info(mesg)
-                    # print(mesg)
                                         
-                if (args.checkpoint_model_dir != "") and ((e % args.checkpoint_interval) == 0) and (batch_id == 0) and (e > 0):
+                if train_sample_flag:
+                    train_sample_flag = False
                     transformer.eval().cpu()
                     ckpt_model_filename = args.model_name + "-ckpt-" + str(e) + args.model_ext
                     ckpt_model_path = os.path.join(args.checkpoint_model_dir, ckpt_model_filename)
@@ -300,12 +310,26 @@ def train(args, use_gpu, trial_batch_size):
                 last_reported_image_count = image_count
                 train_eta = 0
                 train_left = 0
+                train_delta = 0
                 if train_completion > 0:
                     train_eta = train_elapsed / train_completion
                     train_left = train_eta - train_elapsed
 
-                logline = None
-                logline = TJsonLog(
+                if (args.logfile != ""):
+                    mesg = str(image_count) + ", " \
+                        + str(train_elapsed) + ", " \
+                        + str(train_interval) + ", " \
+                        + str(round(agg_content_loss / (batch_id + 1))) + ", " \
+                        + str(round(agg_style_loss / (batch_id + 1))) + ", " \
+                        + str(round((agg_content_loss + agg_style_loss) / (batch_id + 1))) \
+                        + ", " + str(reporting_line) \
+                        + ", " + str(train_completion) \
+                        + ", " + str(total_images) \
+                        + ", " + str(train_eta) \
+                        + ", " + str(train_left)
+                    logging.info(mesg)
+
+                print(json.dumps(TJsonLog(
                     image_count = image_count,
                     train_elapsed = round(train_elapsed),
                     train_interval = train_interval,
@@ -317,29 +341,26 @@ def train(args, use_gpu, trial_batch_size):
                     total_images = total_images,
                     train_eta = round(train_eta),
                     train_left = round(train_left),
-                    train_delta = 0)
-
-                mesg = str(image_count) + ", " \
-                    + str(train_elapsed) + ", " \
-                    + str(train_interval) + ", " \
-                    + str(round(agg_content_loss / (batch_id + 1))) + ", " \
-                    + str(round(agg_style_loss / (batch_id + 1))) + ", " \
-                    + str(round((agg_content_loss + agg_style_loss) / (batch_id + 1))) \
-                    + ", " + str(reporting_line) \
-                    + ", " + str(train_completion) \
-                    + ", " + str(total_images) \
-                    + ", " + str(train_eta) \
-                    + ", " + str(train_left)
-
-                if (args.logfile != ""):
-                    logging.info(mesg)
-                # print(mesg)
-                print(json.dumps(logline))
+                    train_delta = train_delta
+                    )))
 
             print("\nDone, trained model saved at", save_model_path)
             print("Batch size =", trial_batch_size, "- Epochs =", epochs)
             if have_delphi_train:
-                return(json.dumps(logline))
+                return(json.dumps(TJsonLog(
+                    image_count = image_count,
+                    train_elapsed = round(train_elapsed),
+                    train_interval = train_interval,
+                    content_loss = round(agg_content_loss / (batch_id + 1)),
+                    style_loss = round(agg_style_loss / (batch_id + 1)),
+                    total_loss = round((agg_content_loss + agg_style_loss) / (batch_id + 1)),
+                    reporting_line = reporting_line,
+                    train_completion = train_completion,
+                    total_images = total_images,
+                    train_eta = round(train_eta),
+                    train_left = round(train_left),
+                    train_delta = train_delta
+                    )))
             
         #    torch.onnx.export(model, dummy_input, "alexnet.onnx", verbose=True, input_names=input_names, output_names=output_names)
 

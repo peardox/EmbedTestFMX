@@ -28,6 +28,7 @@ procedure TfrmProgress.ShowProgress(const ADesc: String);
 begin
   txtProgress.Text := ADesc;
   txtProgress.Repaint;
+  frmProgress.BringToFront;
 end;
 
 end.

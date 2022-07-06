@@ -78,15 +78,13 @@ def do_train(opts = None):
             style_image="style-images/gig.jpg",
             model_name="gig-256",
             model_dir="models",
-            checkpoint_model_dir="",
+            checkpoint_model_dir="cache",
             model_ext = ".pth",
             net="vgg19",
             logfile="",
             epochs=2,
             limit=0,
             batch_size=8,
-            log_interval=500,
-            checkpoint_interval=1000,
             image_size=256,
             seed=42,
             content_weight=1e5,
@@ -95,7 +93,6 @@ def do_train(opts = None):
             style_scale=1.0,
             force_size=True,
             ignore_gpu=False,
-			cuda=True,
             log_event_api=False)
 
 #    check_paths(args)
@@ -143,7 +140,6 @@ def do_stylize(opts = None):
             model_ext = ".pth",
             logfile = "",
             content_scale = 1,
-            cuda = True,
             ignore_gpu = False,
             export_onnx = False,
             add_model_ext = True,
@@ -169,7 +165,6 @@ def do_test(opts = None):
             model_ext = ".pth",
             logfile = "",
             content_scale = 1,
-            cuda = True,
             ignore_gpu = False,
             export_onnx = False,
             add_model_ext = True,
@@ -187,15 +182,36 @@ def delphi_train_test():
     for i in ptrain.GetPropertyList():
         print(i, '=', ptrain.GetProperty(i))
     
-    rval = "Hello world"
+    rval = None
     
-    trial_batch = 1
+    trial_batch = trainopts.batch_size
     
     start = time.time()
-    if trainopts.ignore_gpu:
-        rval = train(trainopts, False, trial_batch)
-    else:
-        rval = train(trainopts, is_gpu_available, trial_batch)
+    
+    while(1):
+        oom = False
+        try:
+            print("Trying batch of ", trial_batch)
+            if trainopts.ignore_gpu:
+                rval = train(trainopts, False, trial_batch)
+            else:
+                rval = train(trainopts, is_gpu_available, trial_batch)
+        except RuntimeError as e:
+            print("Hit exception handler")
+            if trial_batch > 0:
+                oom = True
+            else:
+                print(e)
+                return("Unrecoverable Error")
+        else:
+            break
+
+        if oom:
+            trial_batch -= 1
+            if is_gpu_available and not trainopts.ignore_gpu:
+                torch.cuda.empty_cache()
+            if trial_batch == 0:
+                return("No batch size found to run current training session (style image too large)")
 
     show_elapsed(start)
     return (rval)

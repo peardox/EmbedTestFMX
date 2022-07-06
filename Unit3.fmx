@@ -9,6 +9,7 @@ object frmTraining: TfrmTraining
   FormFactor.Width = 320
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
+  OnShow = FormShow
   DesignerMasterStyle = 0
   object Text1: TText
     Position.X = 56.000000000000000000
@@ -16,13 +17,7 @@ object frmTraining: TfrmTraining
     Size.Width = 353.000000000000000000
     Size.Height = 49.000000000000000000
     Size.PlatformDefault = False
-  end
-  object Text2: TText
-    Position.X = 56.000000000000000000
-    Position.Y = 96.000000000000000000
-    Size.Width = 353.000000000000000000
-    Size.Height = 297.000000000000000000
-    Size.PlatformDefault = False
+    TextSettings.Font.Size = 36.000000000000000000
   end
   object btnAbort: TButton
     Position.X = 64.000000000000000000
@@ -37,5 +32,71 @@ object frmTraining: TfrmTraining
     TabOrder = 3
     Text = 'Sample'
     OnClick = btnSampleClick
+  end
+  object TabControl1: TTabControl
+    Position.X = 56.000000000000000000
+    Position.Y = 88.000000000000000000
+    Size.Width = 353.000000000000000000
+    Size.Height = 289.000000000000000000
+    Size.PlatformDefault = False
+    TabIndex = 0
+    TabOrder = 4
+    TabPosition = PlatformDefault
+    Sizes = (
+      353s
+      263s
+      353s
+      263s
+      353s
+      263s)
+    object TabItem1: TTabItem
+      CustomIcon = <
+        item
+        end>
+      IsSelected = True
+      Size.Width = 69.000000000000000000
+      Size.Height = 26.000000000000000000
+      Size.PlatformDefault = False
+      StyleLookup = ''
+      TabOrder = 0
+      Text = 'TabItem1'
+      ExplicitSize.cx = 69.000000000000000000
+      ExplicitSize.cy = 26.000000000000000000
+      object Text2: TText
+        Align = Client
+        Size.Width = 353.000000000000000000
+        Size.Height = 263.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.Font.Size = 72.000000000000000000
+      end
+    end
+    object TabItem2: TTabItem
+      CustomIcon = <
+        item
+        end>
+      IsSelected = False
+      Size.Width = 69.000000000000000000
+      Size.Height = 26.000000000000000000
+      Size.PlatformDefault = False
+      StyleLookup = ''
+      TabOrder = 0
+      Text = 'TabItem2'
+      ExplicitSize.cx = 69.000000000000000000
+      ExplicitSize.cy = 26.000000000000000000
+    end
+    object TabItem3: TTabItem
+      CustomIcon = <
+        item
+        end>
+      IsSelected = False
+      Size.Width = 69.000000000000000000
+      Size.Height = 26.000000000000000000
+      Size.PlatformDefault = False
+      StyleLookup = ''
+      TabOrder = 0
+      Text = 'TabItem3'
+      ExplicitSize.cx = 69.000000000000000000
+      ExplicitSize.cy = 26.000000000000000000
+    end
   end
 end

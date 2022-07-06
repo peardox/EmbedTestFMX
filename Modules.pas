@@ -10,6 +10,7 @@ type
     JsonLog: String;
     StyleAbortFlag: Boolean;
     TrainAbortFlag: Boolean;
+    TrainSampleFlag: Boolean;
   end;
 
   TTrainingOptions = record
@@ -24,8 +25,6 @@ type
     epochs: Integer;
     limit: Integer;
     batch_size: Integer;
-    log_interval: Integer;
-    checkpoint_interval: Integer;
     image_size: Integer;
     seed: Integer;
     content_weight: Single;
@@ -34,7 +33,6 @@ type
     style_scale: Single;
     force_size: Boolean;
     ignore_gpu: Boolean;
-    cuda: Boolean;
     log_event_api: Boolean;
   end;
 
@@ -47,7 +45,6 @@ type
     model_ext: String;
     logfile: String;
     content_scale: Single;
-    cuda: Boolean;
     ignore_gpu: Boolean;
     export_onnx: Boolean;
     add_model_ext: Boolean;
@@ -82,6 +79,8 @@ begin
     Result.JsonLog := String.Empty;
     Result.StyleAbortFlag := False;
     Result.TrainAbortFlag := False;
+    Result.TrainSampleFlag := False;
+
 end;
 
 function CreateDefaultStylizeOptions: TStylizeOptions;
@@ -94,7 +93,6 @@ begin
   Result.model_ext := '.pth';
   Result.logfile := String.Empty;
   Result.content_scale := 1;
-  Result.cuda := True;
   Result.ignore_gpu := False;
   Result.export_onnx := False;
   Result.add_model_ext := True;
@@ -104,30 +102,25 @@ end;
 ///// Training Module Definitions /////
 function CreateDefaultTrainingOptions: TTrainingOptions;
 begin
-  Result.dataset := '/git/artogo/datasets/train/unsplash/lite/256';
-//  Result.style_image := 'style-images/dae_mosaic_1-2048.jpg';
-//  Result.model_name := 'dummy';
-  Result.style_image := '/dae/dae/1024/dae_mosaic_1.jpg';
-  Result.model_name := 'dae_mosaic_1-300';
+  Result.dataset := 'datasets/train/unsplash/lite/256';
+  Result.style_image := 'style-images/wall_800x510.jpg';
+  Result.model_name := 'test-model';
   Result.model_dir := 'models';
   Result.model_ext := '.pth';
-  Result.checkpoint_model_dir := '';
+  Result.checkpoint_model_dir := 'cache';
   Result.net := 'vgg16';
   Result.logfile := '';
   Result.epochs := 1;
   Result.limit := 0;
-  Result.batch_size := 12;
-  Result.log_interval := 500;
-  Result.checkpoint_interval := 1000;
+  Result.batch_size := 6;
   Result.image_size := 256;
   Result.seed := 42;
   Result.content_weight := 1e5;
   Result.style_weight := 1e10;
   Result.lr := 1e-3;
-  Result.style_scale := 1/3;
+  Result.style_scale := 1;
   Result.force_size := True;
   Result.ignore_gpu := False;
-  Result.cuda := True;
   Result.log_event_api := True;
 end;
 
