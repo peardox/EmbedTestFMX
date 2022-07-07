@@ -91,7 +91,6 @@ def train(args, use_gpu, trial_batch_size):
     total_images = 1 # for div by zero prevention
     epochs = args.epochs;
     last_reported_image_count = 0
-    first_pass = True
     ilimit = 0
     train_elapsed = 0
     train_interval = 0
@@ -102,11 +101,6 @@ def train(args, use_gpu, trial_batch_size):
     try:
         device = torch.device("cuda" if use_gpu else "cpu")
         # torch.set_num_threads(os.cpu_count())
-
-        if args.limit > 0:
-            ilimit = args.limit
-            print("Set limit to " + str(ilimit))
-            total_images = epochs * ilimit
             
         logging.info("image_count, train_elapsed, train_interval, content_loss, style_loss, total_loss, reporting_line, train_completion, total_images, train_eta, train_left, delta_time")
 
@@ -128,7 +122,11 @@ def train(args, use_gpu, trial_batch_size):
         train_dataset = datasets.ImageFolder(args.dataset, transform)
         train_loader = DataLoader(train_dataset, batch_size=trial_batch_size)
 
-        if ilimit == 0:
+        if args.limit > 0:
+            ilimit = args.limit
+            total_images = ilimit
+            epochs = (total_images // len(train_dataset)) + 1
+        else:
             total_images = epochs * len(train_dataset)
             
         # GPU is unused at this point
@@ -155,17 +153,31 @@ def train(args, use_gpu, trial_batch_size):
         gram_style = [utils.gram_matrix(y) for y in features_style]
 
 
-        if first_pass:
-            train_start = time.time()
-            first_pass = False
+        train_start = time.time()
+
+        print("Set ilimit = " + str(ilimit) + ", epochs = " + str(epochs) + ", total_images = " + str(total_images))
 
         for e in range(epochs):
+            if ((ilimit != 0) and (image_count >= ilimit)) or abort_flag:
+                if abort_flag:
+                    print("Epoch aborting run !!!")
+                else:
+                    print("Epoch limit reached : " + str(ilimit));
+                break;
+            
             transformer.train()
             agg_content_loss = 0.
             agg_style_loss = 0.
             count = 0
             
             for batch_id, (x, _) in enumerate(train_loader):
+                if ((ilimit != 0) and (image_count >= ilimit)) or abort_flag:
+                    if abort_flag:
+                        print("Batch aborting run !!!")
+                    else:
+                        print("Batch limit reached : " + str(ilimit));
+                    break
+
                 n_batch = len(x)
                 count += n_batch
                 optimizer.zero_grad()
@@ -208,13 +220,14 @@ def train(args, use_gpu, trial_batch_size):
                         last_train = train_elapsed
                     else:
                         last_train = train_left
+                        
                     train_delta = 1
                     
                     if train_completion > 0:
                         train_eta = train_elapsed / train_completion
                         train_left = train_eta - train_elapsed
                         if last_train == 0:
-                            train_delta = 0
+                            train_delta = 1
                         else:
                             train_delta = 1 - (train_left / last_train)
                             
@@ -226,15 +239,15 @@ def train(args, use_gpu, trial_batch_size):
                                 image_count = image_count,
                                 train_elapsed = round(train_elapsed),
                                 train_interval = train_interval,
-                                content_loss = round(agg_content_loss / (batch_id + 1)),
-                                style_loss = round(agg_style_loss / (batch_id + 1)),
-                                total_loss = round((agg_content_loss + agg_style_loss) / (batch_id + 1)),
-                                reporting_line = reporting_line,
-                                train_completion = train_completion,
+                                content_loss = round(agg_content_loss / (batch_id + 1)),                    # Loss chart
+                                style_loss = round(agg_style_loss / (batch_id + 1)),                        # Loss chart
+                                total_loss = round((agg_content_loss + agg_style_loss) / (batch_id + 1)),   # Loss chart
+                                reporting_line = reporting_line,        # Enable Buttons when = 1
+                                train_completion = train_completion,    # Progress bar
                                 total_images = total_images,
-                                train_eta = round(train_eta),
-                                train_left = round(train_left),
-                                train_delta = train_delta
+                                train_eta = round(train_eta),           # ETA Progress
+                                train_left = round(train_left),         # ETA Progress
+                                train_delta = train_delta               # Enable Countdown
                                 ))
                             pinout.DelphiIO();
                             abort_flag = ioopts.TrainAbortFlag;
@@ -293,15 +306,7 @@ def train(args, use_gpu, trial_batch_size):
                     print("Sample =", sample);
                     ioopts.SampleFilename = sample;
                     pinout.SampleToDelphi()
-                    transformer.to(device).train()
-                    
-                if (args.limit != 0 and count >= ilimit) or abort_flag:
-                    if abort_flag:
-                        print("Aborting run !!!")
-                    else:
-                        pass # print("Limit reached : " + str(ilimit));
-                    break;
-                    
+                    transformer.to(device).train()                    
 
     except Exception as e:
         print(e)

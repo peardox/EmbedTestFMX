@@ -1,11 +1,11 @@
 object frmTraining: TfrmTraining
   Left = 0
   Top = 0
+  BorderStyle = Single
   Caption = 'Training Status'
   ClientHeight = 480
   ClientWidth = 447
   Position = MainFormCenter
-  FormStyle = StayOnTop
   FormFactor.Width = 320
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
@@ -21,14 +21,14 @@ object frmTraining: TfrmTraining
   end
   object btnAbort: TButton
     Position.X = 64.000000000000000000
-    Position.Y = 432.000000000000000000
+    Position.Y = 408.000000000000000000
     TabOrder = 2
     Text = 'Abort'
     OnClick = btnAbortClick
   end
   object btnSample: TButton
     Position.X = 328.000000000000000000
-    Position.Y = 432.000000000000000000
+    Position.Y = 408.000000000000000000
     TabOrder = 3
     Text = 'Sample'
     OnClick = btnSampleClick
@@ -106,6 +106,39 @@ object frmTraining: TfrmTraining
       Text = 'Loss'
       ExplicitSize.cx = 69.000000000000000000
       ExplicitSize.cy = 26.000000000000000000
+      object Chart1: TChart
+        Foot.Font.StyleExt = {00040000000200000004000000}
+        Legend.Title.Font.StyleExt = {00070000000000000004000000}
+        SubFoot.Font.StyleExt = {00040000000200000004000000}
+        Title.Text.Strings = (
+          'Style and Content Loss')
+        View3D = False
+        View3DWalls = False
+        Zoom.Brush.Kind = None
+        Zoom.Pen.Fill.Color = claSilver
+        Align = Client
+        TabOrder = 0
+        Size.Width = 353.000000000000000000
+        Size.Height = 263.000000000000000000
+        Size.PlatformDefault = False
+        ColorPaletteIndex = 13
+      end
     end
+  end
+  object ProgressBar1: TProgressBar
+    Align = Bottom
+    Max = 1.000000000000000000
+    Orientation = Horizontal
+    Position.Y = 460.000000000000000000
+    Size.Width = 447.000000000000000000
+    Size.Height = 20.000000000000000000
+    Size.PlatformDefault = False
+  end
+  object Button1: TButton
+    Position.X = 192.000000000000000000
+    Position.Y = 408.000000000000000000
+    TabOrder = 5
+    Text = 'Button1'
+    OnClick = Button1Click
   end
 end

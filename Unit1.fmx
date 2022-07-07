@@ -420,4 +420,11 @@ object frmMain: TfrmMain
     Left = 240
     Top = 146
   end
+  object Timer1: TTimer
+    Enabled = False
+    Interval = 100
+    OnTimer = Timer1Timer
+    Left = 488
+    Top = 154
+  end
 end

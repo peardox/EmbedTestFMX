@@ -65,6 +65,7 @@ type
     modTrain: TPythonModule;
     TrainMemo: TMemo;
     modInputOutput: TPythonModule;
+    Timer1: TTimer;
     procedure PyIOSendUniData(Sender: TObject; const Data: string);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
@@ -103,6 +104,7 @@ type
       const APythonVersion: string);
     procedure modInputOutputEvents1Execute(Sender: TObject; PSelf,
       Args: PPyObject; var Result: PPyObject);
+    procedure Timer1Timer(Sender: TObject);
   private
     { Private declarations }
     CodeRoot: String;
@@ -150,6 +152,7 @@ type
     procedure Log(AMsg: String);
     procedure AbortTraining;
     procedure SampleTraining;
+    procedure TrainModel;
   end;
 
 var
@@ -210,6 +213,8 @@ begin
   CreateSystem;
 
   EnableForm(False);
+  TabControl1.ActiveTab := TabItem2;
+
 end;
 
 procedure TfrmMain.FormShow(Sender: TObject);
@@ -672,14 +677,28 @@ end;
 
 procedure TfrmMain.btnTrainTestClick(Sender: TObject);
 var
-  _im: Variant;
+  mr: TModalResult;
 begin
   TabControl1.ActiveTab := TabItem3;
   InputOutputOptions.TrainAbortFlag := False;
   InputOutputOptions.TrainSampleFlag := False;
   if not SystemOperational then
     RunCode();
-  frmTraining.Show;
+  mr := frmTraining.ShowModal;
+  Log('Modal Finished ' + IntToStr(mr));
+//  frmTraining.ModalResult := mrOK;
+end;
+
+procedure TfrmMain.Timer1Timer(Sender: TObject);
+begin
+  frmTraining.ModalResult := mrOK;
+  Timer1.Enabled := False;
+end;
+
+procedure TfrmMain.TrainModel;
+var
+  _im: Variant;
+begin
   frmTraining.BringToFront;
   TrainMemo.BeginUpdate;
   TrainMemo.Lines.Add('Running Training Code');
@@ -687,8 +706,17 @@ begin
   _im := MainModule.delphi_train_test();
   ContentImageFileName := _im;
   Log('_im (' + ContentImageFileName + ') is a ' + VarTypeAsText(VarType(_im)));
-  frmTraining.Hide;
-//  StyleImage.Bitmap.LoadFromFile(ContentImageFileName);
+  Log('Sending Training Done');
+  Timer1.Enabled := True;
+
+//  frmTraining.Hide;
+{
+  TThread.Queue(nil, procedure()
+    begin
+      frmTraining.ModalResult := mrOK;
+      Log('Training Hidden');
+    end);
+}
 end;
 
 procedure TfrmMain.AbortTraining;
@@ -728,7 +756,7 @@ procedure TfrmMain.modInputOutputEvents0Execute(Sender: TObject; PSelf,
       try
         log := lSerializer.Deserialize<TTrainLog>(ALogLine);
         frmTraining.UpdateProgress(log);
-        Application.ProcessMessages;
+//        Application.ProcessMessages;
       except
        on E : Exception do
        begin

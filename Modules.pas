@@ -88,8 +88,8 @@ function CreateDefaultStylizeOptions: TStylizeOptions;
 begin
   Result.content_image := 'input-images/fermin-rembg.png';
   Result.content_image_raw := String.Empty;
-  Result.output_image := 'output-images/fermin-flowers-256-4.jpg';
-  Result.model := 'flowers-256-4';
+  Result.output_image := 'output-images/fermin-test.jpg';
+  Result.model := 'test-model';
   Result.model_dir := 'models';
   Result.model_ext := '.pth';
   Result.logfile := String.Empty;
@@ -103,7 +103,7 @@ end;
 ///// Training Module Definitions /////
 function CreateDefaultTrainingOptions: TTrainingOptions;
 begin
-  Result.dataset := 'datasets/train/unsplash/lite/256';
+  Result.dataset := 'datasets/train/unsplash/lite/256/01/01';
   Result.style_image := 'style-images/wall_800x510.jpg';
   Result.model_name := 'test-model';
   Result.model_dir := 'models';
@@ -111,9 +111,9 @@ begin
   Result.checkpoint_model_dir := 'cache';
   Result.net := 'vgg16';
   Result.logfile := '';
-  Result.epochs := 1;
-  Result.limit := 1000;
-  Result.batch_size := 6;
+  Result.epochs := 2;
+  Result.limit := 50000;
+  Result.batch_size := 8;
   Result.image_size := 256;
   Result.seed := 42;
   Result.content_weight := 1e5;
