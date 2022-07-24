@@ -27,27 +27,27 @@ except Exception as e:
     
 
 try:
-    import pstylize
+    import pstyle
 
     have_delphi_style = True
 
     class TDelphiStylize:
         def __getattr__(Self, Key):
-            return pstylize.GetProperty(Key)
+            return pstyle.GetProperty(Key)
 
         def __setattr__(Self, Key, Value):
-            pstylize.SetProperty(Key, Value)
+            pstyle.SetProperty(Key, Value)
 
         def __repr__(Self):
             tmp = ""
-            for i in pstylize.GetPropertyList():
+            for i in pstyle.GetPropertyList():
                 if tmp:
                     tmp = tmp + ", "
                 tmp = tmp + i + " = " + str(getattr(Self,i))
             return tmp
 
 except Exception as e:
-    print("Missing pstylize")
+    print("Missing pstyle")
     
 try:
     import ptrain
@@ -72,3 +72,8 @@ try:
 except Exception as e:
     print("Missing ptrain")
   
+class TJsonLog(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__dict__ = self
+

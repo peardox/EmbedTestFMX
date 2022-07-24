@@ -24,13 +24,13 @@ type
     TabItem1: TTabItem;
     TabItem2: TTabItem;
     TabItem3: TTabItem;
-    PyEngine: TPythonEngine;
+    PyEng: TPythonEngine;
     SciPy1: TSciPy;
     NumPy1: TNumPy;
     PyTorch1: TPyTorch;
     TorchVision1: TTorchVision;
     CodeMemo: TMemo;
-    PyEmbedEnv: TPyEmbeddedResEnvironment39;
+    PyEnv: TPyEmbeddedResEnvironment39;
     PyIO: TPythonGUIInputOutput;
     cbCleanOnExit: TCheckBox;
     lblStatus: TLabel;
@@ -73,13 +73,13 @@ type
     procedure PackageAfterInstall(Sender: TObject);
     procedure PackageInstallError(Sender: TObject; AErrorMessage: string);
     procedure PackageBeforeImport(Sender: TObject);
-    procedure PyEngineBeforeUnload(Sender: TObject);
-    procedure PyEngineSysPathInit(Sender: TObject; PathList: PPyObject);
-    procedure PyEmbedEnvAfterActivate(Sender: TObject;
+    procedure PyEngBeforeUnload(Sender: TObject);
+    procedure PyEngSysPathInit(Sender: TObject; PathList: PPyObject);
+    procedure PyEnvAfterActivate(Sender: TObject;
       const APythonVersion: string; const AActivated: Boolean);
-    procedure PyEmbedEnvAfterDeactivate(Sender: TObject;
+    procedure PyEnvAfterDeactivate(Sender: TObject;
       const APythonVersion: string);
-    procedure PyEmbedEnvZipProgress(Sender: TObject;
+    procedure PyEnvZipProgress(Sender: TObject;
       ADistribution: TPyCustomEmbeddableDistribution; FileName: string;
       Header: TZipHeader; Position: Int64);
     procedure btnReLoadClick(Sender: TObject);
@@ -89,18 +89,18 @@ type
     procedure modStylizeInitialization(Sender: TObject);
     procedure btnStyleTestClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure PyEmbedEnvBeforeDeactivate(Sender: TObject;
+    procedure PyEnvBeforeDeactivate(Sender: TObject;
       const APythonVersion: string);
     procedure modTrainInitialization(Sender: TObject);
     procedure btnTrainTestClick(Sender: TObject);
     procedure modInputOutputEvents0Execute(Sender: TObject; PSelf,
       Args: PPyObject; var Result: PPyObject);
     procedure modInputOutputInitialization(Sender: TObject);
-    procedure PyEmbedEnvBeforeActivate(Sender: TObject;
+    procedure PyEnvBeforeActivate(Sender: TObject;
       const APythonVersion: string);
-    procedure PyEmbedEnvAfterSetup(Sender: TObject;
+    procedure PyEnvAfterSetup(Sender: TObject;
       const APythonVersion: string);
-    procedure PyEmbedEnvBeforeSetup(Sender: TObject;
+    procedure PyEnvBeforeSetup(Sender: TObject;
       const APythonVersion: string);
     procedure modInputOutputEvents1Execute(Sender: TObject; PSelf,
       Args: PPyObject; var Result: PPyObject);
@@ -177,9 +177,9 @@ begin
   AppRoot := IncludeTrailingPathDelimiter(System.IOUtils.TPath.GetLibraryPath);
   {$else}
   AppRoot := IncludeTrailingPathDelimiter(System.IOUtils.TPath.GetLibraryPath) + 'EmbedTest/';
-  PyEmbedEnv.EnvironmentPath := AppRoot + 'python';
-  PyEngine.DllName := 'libpython3.9.dylib';
-  PyEngine.DllPath := PyEmbedEnv.EnvironmentPath + '/3.9/lib';
+  PyEnv.EnvironmentPath := AppRoot + 'python';
+  PyEng.DllName := 'libpython3.9.dylib';
+  PyEng.DllPath := PyEnv.EnvironmentPath + '/3.9/lib';
   {$endif}
   CodeRoot := AppRoot;
   ImageRoot := AppRoot;
@@ -234,8 +234,8 @@ begin
       Application.ProcessMessages();
     end;
   end;
-  PyEmbedEnv.Deactivate;
-//  PyEngine.UnloadDll;
+  PyEnv.Deactivate;
+//  PyEng.UnloadDll;
   if not(ContentBitmap = Nil) then
   begin
     ContentBitmap.Free;
@@ -339,8 +339,8 @@ end;
 
 procedure TfrmMain.PackageConfigureInstall(Sender: TObject);
 begin
-//  TPyManagedPackage(Sender).PythonEngine := PyEngine;
-//  TPyManagedPackage(Sender).PyEnvironment := PyEmbedEnv;
+//  TPyManagedPackage(Sender).PythonEngine := PyEng;
+//  TPyManagedPackage(Sender).PyEnvironment := PyEnv;
   TPyManagedPackage(Sender).AfterInstall := PackageAfterInstall;
   TPyManagedPackage(Sender).OnInstallError := PackageInstallError;
   TPyManagedPackage(Sender).BeforeImport := PackageBeforeImport;
@@ -411,25 +411,25 @@ begin
       Log('Downloads : ' + System.IOUtils.TPath.GetDownloadsPath);
       Log('Shared Downloads : ' + System.IOUtils.TPath.GetSharedDownloadsPath);
       Log('===============');
-      Log('1 Env Path = ' + PyEmbedEnv.EnvironmentPath);
-      Log('1 Engine Lib = ' + PyEngine.DllName);
-      Log('1 Engine Libpath = ' + PyEngine.DllPath);
+      Log('1 Env Path = ' + PyEnv.EnvironmentPath);
+      Log('1 Engine Lib = ' + PyEng.DllName);
+      Log('1 Engine Libpath = ' + PyEng.DllPath);
       MaskFPUExceptions(True);
       FTask := TTask.Run(procedure() begin
         UpdateProgressForm('Checking System');
         Log('Checking System');
-        PyEmbedEnv.Setup(PyEmbedEnv.PythonVersion);
+        PyEnv.Setup(PyEnv.PythonVersion);
         FTask.CheckCanceled();
         TThread.Synchronize(nil, procedure() begin
-          Log('2 Env Path = ' + PyEmbedEnv.EnvironmentPath);
-          Log('2 Engine Lib = ' + PyEngine.DllName);
-          Log('2 Engine Libpath = ' + PyEngine.DllPath);
+          Log('2 Env Path = ' + PyEnv.EnvironmentPath);
+          Log('2 Engine Lib = ' + PyEng.DllName);
+          Log('2 Engine Libpath = ' + PyEng.DllPath);
           UpdateProgressForm('Activating System' + sLineBreak + sLineBreak + 'One Moment Please...');
           Log('Activating System' + sLineBreak + sLineBreak + 'One Moment Please...');
-          Log('3 Env Path = ' + PyEmbedEnv.EnvironmentPath);
-          Log('3 Engine Lib = ' + PyEngine.DllName);
-          Log('3 Engine Libpath = ' + PyEngine.DllPath);
-          if PyEmbedEnv.Activate(PyEmbedEnv.PythonVersion) then
+          Log('3 Env Path = ' + PyEnv.EnvironmentPath);
+          Log('3 Engine Lib = ' + PyEng.DllName);
+          Log('3 Engine Libpath = ' + PyEng.DllPath);
+          if PyEnv.Activate(PyEnv.PythonVersion) then
             Log('Python activate returned true')
           else
             Log('Python activate returned false');
@@ -549,7 +549,7 @@ begin
     for var i := 0 to Shim.Count - 1 do
       Log(Shim[i]);
 
-    PyEngine.ExecStrings(Shim);
+    PyEng.ExecStrings(Shim);
     LastShimPath := CodeRoot + ShimPath;
   finally
     if not(Shim = Nil) then
@@ -565,7 +565,7 @@ begin
         ShimSysPath('pysrc');
         FirstRun := False;
       end;
-    PyEngine.ExecStrings(PythonCode);
+    PyEng.ExecStrings(PythonCode);
   except
     on E: EPyIndentationError do
       begin
@@ -606,7 +606,7 @@ end;
 
 ///// Python Setup /////
 
-procedure TfrmMain.PyEmbedEnvZipProgress(Sender: TObject;
+procedure TfrmMain.PyEnvZipProgress(Sender: TObject;
   ADistribution: TPyCustomEmbeddableDistribution; FileName: string;
   Header: TZipHeader; Position: Int64);
 begin
@@ -616,37 +616,37 @@ end;
 
 ///// Python Startup /////
 
-procedure TfrmMain.PyEmbedEnvAfterActivate(Sender: TObject;
+procedure TfrmMain.PyEnvAfterActivate(Sender: TObject;
   const APythonVersion: string; const AActivated: Boolean);
 begin
   if AActivated then
     Log('Python ' + APythonVersion + ' Active');
 end;
 
-procedure TfrmMain.PyEmbedEnvAfterDeactivate(Sender: TObject;
+procedure TfrmMain.PyEnvAfterDeactivate(Sender: TObject;
   const APythonVersion: string);
 begin
   SystemActivated := False;
   if cbCleanOnExit.IsChecked then
     begin
-      TDirectory.Delete(PyEmbedEnv.EnvironmentPath, True);
+      TDirectory.Delete(PyEnv.EnvironmentPath, True);
       frmProgress.Hide;
     end;
 end;
 
-procedure TfrmMain.PyEmbedEnvAfterSetup(Sender: TObject;
+procedure TfrmMain.PyEnvAfterSetup(Sender: TObject;
   const APythonVersion: string);
 begin
    Log('Python ' + APythonVersion + ' is now setup');
 end;
 
-procedure TfrmMain.PyEmbedEnvBeforeActivate(Sender: TObject;
+procedure TfrmMain.PyEnvBeforeActivate(Sender: TObject;
   const APythonVersion: string);
 begin
    Log('Activating Python ' + APythonVersion);
 end;
 
-procedure TfrmMain.PyEmbedEnvBeforeDeactivate(Sender: TObject;
+procedure TfrmMain.PyEnvBeforeDeactivate(Sender: TObject;
   const APythonVersion: string);
 begin
   if cbCleanOnExit.IsChecked then
@@ -657,20 +657,20 @@ begin
     end;
 end;
 
-procedure TfrmMain.PyEmbedEnvBeforeSetup(Sender: TObject;
+procedure TfrmMain.PyEnvBeforeSetup(Sender: TObject;
   const APythonVersion: string);
 begin
    Log('Setting Up Python ' + APythonVersion);
 end;
 
-procedure TfrmMain.PyEngineBeforeUnload(Sender: TObject);
+procedure TfrmMain.PyEngBeforeUnload(Sender: TObject);
 begin
-  Log('PyEngineBeforeUnload'); // SBDbg
+  Log('PyEngBeforeUnload'); // SBDbg
 end;
 
-procedure TfrmMain.PyEngineSysPathInit(Sender: TObject; PathList: PPyObject);
+procedure TfrmMain.PyEngSysPathInit(Sender: TObject; PathList: PPyObject);
 begin
-  Log('PyEngineSysPathInit'); // SBDbg
+  Log('PyEngSysPathInit'); // SBDbg
 end;
 
 ///// InputOutput Module Definitions /////

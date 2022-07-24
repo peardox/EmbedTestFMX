@@ -305,23 +305,30 @@ object frmMain: TfrmMain
     Left = 576
     Top = 208
   end
-  object PyEngine: TPythonEngine
+  object Timer1: TTimer
+    Enabled = False
+    Interval = 100
+    OnTimer = Timer1Timer
+    Left = 488
+    Top = 154
+  end
+  object PyEng: TPythonEngine
     AutoLoad = False
     DllName = 'python39.dll'
     DllPath = 'python'
     APIVersion = 1013
     RegVersion = '3.9'
     UseLastKnownVersion = False
-    OnBeforeUnload = PyEngineBeforeUnload
+    OnBeforeUnload = PyEngBeforeUnload
     AutoFinalize = False
     IO = PyIO
-    OnSysPathInit = PyEngineSysPathInit
+    OnSysPathInit = PyEngSysPathInit
     Left = 96
     Top = 208
   end
   object SciPy1: TSciPy
     AutoImport = False
-    PythonEngine = PyEngine
+    PythonEngine = PyEng
     ManagerKind = pip
     AutoInstall = False
     BeforeInstall = PackageConfigureInstall
@@ -330,7 +337,7 @@ object frmMain: TfrmMain
   end
   object NumPy1: TNumPy
     AutoImport = False
-    PythonEngine = PyEngine
+    PythonEngine = PyEng
     ManagerKind = pip
     AutoInstall = False
     BeforeInstall = PackageConfigureInstall
@@ -339,7 +346,7 @@ object frmMain: TfrmMain
   end
   object PyTorch1: TPyTorch
     AutoImport = False
-    PythonEngine = PyEngine
+    PythonEngine = PyEng
     ManagerKind = pip
     Managers.Pip.InstallOptions.ExtraIndexUrl = 'https://download.pytorch.org/whl/cu116'
     AutoInstall = False
@@ -349,7 +356,7 @@ object frmMain: TfrmMain
   end
   object TorchVision1: TTorchVision
     AutoImport = False
-    PythonEngine = PyEngine
+    PythonEngine = PyEng
     ManagerKind = pip
     Managers.Pip.InstallOptions.ExtraIndexUrl = 'https://download.pytorch.org/whl/cu116'
     AutoInstall = False
@@ -357,17 +364,17 @@ object frmMain: TfrmMain
     Left = 312
     Top = 272
   end
-  object PyEmbedEnv: TPyEmbeddedResEnvironment39
-    BeforeSetup = PyEmbedEnvBeforeSetup
-    AfterSetup = PyEmbedEnvAfterSetup
-    BeforeActivate = PyEmbedEnvBeforeActivate
-    AfterActivate = PyEmbedEnvAfterActivate
-    BeforeDeactivate = PyEmbedEnvBeforeDeactivate
-    AfterDeactivate = PyEmbedEnvAfterDeactivate
+  object PyEnv: TPyEmbeddedResEnvironment39
+    BeforeSetup = PyEnvBeforeSetup
+    AfterSetup = PyEnvAfterSetup
+    BeforeActivate = PyEnvBeforeActivate
+    AfterActivate = PyEnvAfterActivate
+    BeforeDeactivate = PyEnvBeforeDeactivate
+    AfterDeactivate = PyEnvAfterDeactivate
     AutoLoad = False
     PythonVersion = '3.9'
-    PythonEngine = PyEngine
-    OnZipProgress = PyEmbedEnvZipProgress
+    PythonEngine = PyEng
+    OnZipProgress = PyEnvZipProgress
     EnvironmentPath = 'python'
     Left = 240
     Top = 208
@@ -381,7 +388,7 @@ object frmMain: TfrmMain
     Top = 208
   end
   object modStylize: TPythonModule
-    Engine = PyEngine
+    Engine = PyEng
     OnInitialization = modStylizeInitialization
     ModuleName = 'pstylize'
     Errors = <>
@@ -389,14 +396,14 @@ object frmMain: TfrmMain
     Top = 144
   end
   object PSUtil1: TPSUtil
-    PythonEngine = PyEngine
+    PythonEngine = PyEng
     ManagerKind = pip
     BeforeInstall = PackageConfigureInstall
     Left = 32
     Top = 272
   end
   object modTrain: TPythonModule
-    Engine = PyEngine
+    Engine = PyEng
     OnInitialization = modTrainInitialization
     ModuleName = 'ptrain'
     Errors = <>
@@ -404,7 +411,7 @@ object frmMain: TfrmMain
     Top = 144
   end
   object modInputOutput: TPythonModule
-    Engine = PyEngine
+    Engine = PyEng
     OnInitialization = modInputOutputInitialization
     Events = <
       item
@@ -419,12 +426,5 @@ object frmMain: TfrmMain
     Errors = <>
     Left = 240
     Top = 146
-  end
-  object Timer1: TTimer
-    Enabled = False
-    Interval = 100
-    OnTimer = Timer1Timer
-    Left = 488
-    Top = 154
   end
 end

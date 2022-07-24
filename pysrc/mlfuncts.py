@@ -32,7 +32,7 @@ def get_gpu_memory(have_psutils, use_gpu):
         r = torch.cuda.memory_reserved(0)
         a = torch.cuda.memory_allocated(0)
         f = r-a  # free inside reserved
-    
+
         gpu = TJsonLog(
             device = d,
             free = f,
@@ -57,9 +57,9 @@ def get_gpu_memory(have_psutils, use_gpu):
         stats = TJsonLog(gpu = gpu, mem = False)
     else:
         stats = TJsonLog(gpu = False, mem = False)
-        
+
     return(stats)
-    
+
 def check_paths(args):
     try:
         if not os.path.exists(args.model_dir):
@@ -69,7 +69,7 @@ def check_paths(args):
     except OSError as e:
         print(e)
         sys.exit(1)
-        
+
 
 def train(args, use_gpu, trial_batch_size):
     if have_delphi_io:
@@ -97,11 +97,11 @@ def train(args, use_gpu, trial_batch_size):
     last_delta = 1
     train_left = 1
     last_train = 0
-    
+
     try:
         device = torch.device("cuda" if use_gpu else "cpu")
         # torch.set_num_threads(os.cpu_count())
-            
+
         logging.info("image_count, train_elapsed, train_interval, content_loss, style_loss, total_loss, reporting_line, train_completion, total_images, train_eta, train_left, delta_time")
 
         np.random.seed(args.seed)
@@ -128,10 +128,10 @@ def train(args, use_gpu, trial_batch_size):
             epochs = (total_images // len(train_dataset)) + 1
         else:
             total_images = epochs * len(train_dataset)
-            
+
         # GPU is unused at this point
 
-        transformer = TransformerNet().to(device)
+        transformer = TransformerNet(showTime = False).to(device)
 
         optimizer = Adam(transformer.parameters(), args.lr)
         mse_loss = torch.nn.MSELoss()
@@ -148,7 +148,7 @@ def train(args, use_gpu, trial_batch_size):
         style = utils.load_image(args.style_image, args.style_scale)
         style = style_transform(style)
         style = style.repeat(trial_batch_size, 1, 1, 1).to(device)
-        
+
         features_style = vgg(utils.normalize_batch(style))
         gram_style = [utils.gram_matrix(y) for y in features_style]
 
@@ -164,12 +164,12 @@ def train(args, use_gpu, trial_batch_size):
                 else:
                     print("Epoch limit reached : " + str(ilimit));
                 break;
-            
+
             transformer.train()
             agg_content_loss = 0.
             agg_style_loss = 0.
             count = 0
-            
+
             for batch_id, (x, _) in enumerate(train_loader):
                 if ((ilimit != 0) and (image_count >= ilimit)) or abort_flag:
                     if abort_flag:
@@ -183,7 +183,7 @@ def train(args, use_gpu, trial_batch_size):
                 optimizer.zero_grad()
 
                 image_count += n_batch
-                
+
                 x = x.to(device)
                 y = transformer(x)
 
@@ -207,7 +207,7 @@ def train(args, use_gpu, trial_batch_size):
 
                 agg_content_loss += content_loss.item()
                 agg_style_loss += style_loss.item()
-                
+
                 train_elapsed = time.time() - train_start
                 train_interval = train_elapsed - train_reported
                 if train_interval > reporting_interval:
@@ -220,9 +220,9 @@ def train(args, use_gpu, trial_batch_size):
                         last_train = train_elapsed
                     else:
                         last_train = train_left
-                        
+
                     train_delta = 1
-                    
+
                     if train_completion > 0:
                         train_eta = train_elapsed / train_completion
                         train_left = train_eta - train_elapsed
@@ -230,7 +230,7 @@ def train(args, use_gpu, trial_batch_size):
                             train_delta = 1
                         else:
                             train_delta = 1 - (train_left / last_train)
-                            
+
                     if(args.log_event_api):
                         # system = get_gpu_memory(have_psutils, use_gpu)
 
@@ -268,7 +268,7 @@ def train(args, use_gpu, trial_batch_size):
                                 train_left = round(train_left),
                                 train_delta = train_delta
                                 )))
-                        
+
                     if (args.logfile != ""):
                         mesg = str(image_count) + ", " \
                             + str(train_elapsed) + ", " \
@@ -283,7 +283,7 @@ def train(args, use_gpu, trial_batch_size):
                             + ", " + str(train_left) \
                             + ", " + str(train_delta)
                         logging.info(mesg)
-                                        
+
                 if train_sample_flag:
                     train_sample_flag = False
                     transformer.eval().cpu()
@@ -306,7 +306,7 @@ def train(args, use_gpu, trial_batch_size):
                     print("Sample =", sample);
                     ioopts.SampleFilename = sample;
                     pinout.SampleToDelphi()
-                    transformer.to(device).train()                    
+                    transformer.to(device).train()
 
     except Exception as e:
         print(e)
@@ -381,12 +381,12 @@ def train(args, use_gpu, trial_batch_size):
                     train_left = round(train_left),
                     train_delta = train_delta
                     )))
-            
+
         #    torch.onnx.export(model, dummy_input, "alexnet.onnx", verbose=True, input_names=input_names, output_names=output_names)
 
 def stylize(args, use_gpu):
     device = torch.device("cuda" if use_gpu else "cpu")
-    
+
     if args.content_image_raw == "":
         content_image = utils.load_image(args.content_image, args.content_scale)
     else:
@@ -403,7 +403,10 @@ def stylize(args, use_gpu):
         output = stylize_onnx(content_image, args)
     else:
         with torch.no_grad():
-            style_model = TransformerNet()
+            style_time = time.time();
+            if have_delphi_style:
+                pstyle.StyleProgress(json.dumps(TJsonLog(event = 'styleStart', time = 0)))
+            style_model = TransformerNet(showTime = True)
             if args.add_model_ext == 1:
                 state_dict = torch.load(os.path.join(args.model_dir, args.model + args.model_ext))
             else:
@@ -415,12 +418,16 @@ def stylize(args, use_gpu):
                 assert args.export_onnx.endswith(".onnx"), "Export model file should end with .onnx"
                 output = torch.onnx._export(
                     style_model, content_image, args.export_onnx, opset_version=11,
-                ).cpu()            
+                ).cpu()
+                if have_delphi_style:
+                    pstyle.StyleProgress(json.dumps(TJsonLog(event = 'styleEnd', time = time.time() - style_time)))
             else:
                 output = style_model(content_image).cpu()
+                if have_delphi_style:
+                    pstyle.StyleProgress(json.dumps(TJsonLog(event = 'styleEnd', time = time.time() - style_time)))
     utils.save_image(args.output_image, output[0])
     return (args.output_image)
-    
+
 def stylize_onnx(content_image, args):
     """
     Read ONNX model and run it using onnxruntime
@@ -441,16 +448,27 @@ def stylize_onnx(content_image, args):
 
     ort_inputs = {ort_session.get_inputs()[0].name: to_numpy(content_image)}
     ort_outs = ort_session.run(None, ort_inputs)
-    img_out_y = ort_outs[0]                                    
+    img_out_y = ort_outs[0]
 
     return torch.from_numpy(img_out_y)
-
-class TJsonLog(dict):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__dict__ = self
 
 class TStylize(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__dict__ = self
+
+##### Test #####
+#opts = TStylize( content_image = "..\\input-images\\haywain.jpg",
+#    content_image_raw = "",
+#    output_image = "..\\output-images\\command-test.jpg",
+#    model = "dae_mosaic_1-200",
+#    model_dir = "..\\models",
+#    model_ext = ".pth",
+#    logfile = "",
+#    content_scale = 1,
+#    ignore_gpu = False,
+#    export_onnx = False,
+#    add_model_ext = True,
+#    log_event_api = False)
+#stylize(opts, False)
+##### Test #####

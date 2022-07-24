@@ -86,10 +86,10 @@ end;
 
 function CreateDefaultStylizeOptions: TStylizeOptions;
 begin
-  Result.content_image := 'input-images/fermin-rembg.png';
+  Result.content_image := 'input-images/haywain.jpg';
   Result.content_image_raw := String.Empty;
-  Result.output_image := 'output-images/fermin-test.jpg';
-  Result.model := 'test-model';
+  Result.output_image := 'output-images/leaves-mosaic-haywain.jpg';
+  Result.model := 'dae_mosaic_1-300';
   Result.model_dir := 'models';
   Result.model_ext := '.pth';
   Result.logfile := String.Empty;
@@ -103,7 +103,7 @@ end;
 ///// Training Module Definitions /////
 function CreateDefaultTrainingOptions: TTrainingOptions;
 begin
-  Result.dataset := 'datasets/train/unsplash/lite/256/01/01';
+  Result.dataset := 'datasets/train/unsplash/lite/256';
   Result.style_image := 'style-images/wall_800x510.jpg';
   Result.model_name := 'test-model';
   Result.model_dir := 'models';

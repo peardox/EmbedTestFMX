@@ -70,6 +70,8 @@ def main():
                                   help="model extension (include dot)")
     train_arg_parser.add_argument("--style-scale", type=float, default=1,
                                   help="size of style-image, default is the original size of style image")
+    train_arg_parser.add_argument("--channels", type=int, default=32,
+                                  help="Channels to use in training")
     train_arg_parser.add_argument("--logfile", type=str, default="",
                                   help="Optional lof file location")
     train_arg_parser.add_argument("--ignore-gpu", type=str2bool, default=False,
